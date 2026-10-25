@@ -427,8 +427,8 @@ const renderPage = async (route: RouteData, template: string, render: (route: Ro
         dateModified: route.evidence.meta.updated || route.evidence.meta.date,
         mainEntityOfPage: canonical,
         image,
-        author: { "@type": "Person", name: "mineguai", url: siteUrl },
-        publisher: { "@type": "Person", name: "mineguai", url: siteUrl },
+        author: { "@type": "Person", name: siteTitle, url: siteUrl },
+        publisher: { "@type": "Person", name: siteTitle, url: siteUrl },
         keywords: route.evidence.meta.clues.join(", ")
       }
     : {
@@ -438,7 +438,7 @@ const renderPage = async (route: RouteData, template: string, render: (route: Ro
         description: siteDescription,
         url: canonical,
         image,
-        author: { "@type": "Person", name: "mineguai", url: siteUrl }
+        author: { "@type": "Person", name: siteTitle, url: siteUrl }
       };
   const socialMeta = [
     `<meta name="robots" content="${isNotFound ? "noindex,follow" : "index,follow,max-image-preview:large"}" />`,
@@ -449,7 +449,7 @@ const renderPage = async (route: RouteData, template: string, render: (route: Ro
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
     `<meta property="og:url" content="${canonical}" />`,
     `<meta property="og:image" content="${image}" />`,
-    `<meta property="og:image:alt" content="mineguai 的头像" />`,
+    `<meta property="og:image:alt" content="${escapeHtml(siteTitle)} 的头像" />`,
     `<meta name="twitter:card" content="summary" />`,
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,

@@ -36,7 +36,7 @@ function applyTheme(theme: Theme) {
   document.documentElement.setAttribute("data-theme", theme);
   document.documentElement.style.colorScheme = theme;
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", theme === "dark" ? "#14120f" : "#f5f1e8");
+  if (meta) meta.setAttribute("content", theme === "dark" ? "#141414" : "#fafafa");
   try {
     window.localStorage.setItem(THEME_KEY, theme);
   } catch {
@@ -114,13 +114,12 @@ export function App({ route }: AppProps) {
   return (
     <>
       <a className="skip-link" href="#content">跳到正文</a>
-      <div className="bg-noise" aria-hidden="true" />
-      <div className="scroll-progress" aria-hidden="true" />
+      {route.kind === "evidence" ? <div className="scroll-progress" aria-hidden="true" /> : null}
       <SiteHeader route={route} onSearch={openCommand} theme={theme} onToggleTheme={toggleTheme} />
       <main id="content" className={`site-main${isHome ? " site-main--home" : ""}`}>
         <RouteSwitch route={route} onSearch={openCommand} />
       </main>
-      <SiteFooter site={route.site} />
+      <SiteFooter />
       <BackToTop />
       <CommandPanel site={route.site} open={commandOpen} onClose={closeCommand} />
     </>
@@ -160,14 +159,13 @@ function SiteHeader({
       <div className="shell site-header__row">
         <a className="brand" href="/" aria-label={`${siteTitle}，返回首页`}>
           <span className="brand__mark">{siteTitle}</span>
-          <span className="brand__cursor" aria-hidden="true" />
+          <img className="brand__avatar" src="/assets/images/wanzi1-720.jpg" alt="" width="24" height="24" decoding="async" />
         </a>
         <nav className="site-nav" aria-label="主导航">
           <NavLinks isActive={isActive} />
         </nav>
         <div className="site-header__tools">
           <button className="tool-button tool-button--search" type="button" onClick={onSearch} aria-label="搜索">
-            <Icon name="search" />
             <span>搜索</span>
           </button>
           <ThemeRocker theme={theme} onToggle={onToggleTheme} />
@@ -193,21 +191,15 @@ function SiteHeader({
 function ThemeRocker({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   const isDark = theme === "dark";
   return (
-    <label className="rocker rocker-small" title={isDark ? "切换到浅色" : "切换到深色"}>
-      <span className="sr-only">切换明暗主题</span>
-      <input
-        type="checkbox"
-        checked={isDark}
-        onChange={onToggle}
-        aria-label={isDark ? "当前深色，点击切换到浅色" : "当前浅色，点击切换到深色"}
-      />
-      <span className="switch-left" aria-hidden="true">
-        <Icon name="moon" />
-      </span>
-      <span className="switch-right" aria-hidden="true">
-        <Icon name="sun" />
-      </span>
-    </label>
+    <button
+      className="tool-button tool-button--theme"
+      type="button"
+      onClick={onToggle}
+      title={isDark ? "切换到浅色" : "切换到深色"}
+      aria-label={isDark ? "切换到浅色" : "切换到深色"}
+    >
+      <Icon name={isDark ? "sun" : "moon"} />
+    </button>
   );
 }
 
@@ -233,7 +225,7 @@ function NavLinks({ isActive, onNavigate }: { isActive: (href: string) => boolea
 }
 
 function RouteSwitch({ route, onSearch }: { route: RouteData; onSearch: () => void }) {
-  if (route.kind === "home") return <HomePage site={route.site} onSearch={onSearch} />;
+  if (route.kind === "home") return <HomePage site={route.site} />;
   if (route.kind === "dossier") return <DossierPage site={route.site} />;
   if (route.kind === "clues") return <CluesPage site={route.site} />;
   if (route.kind === "clue") return <CluePage site={route.site} clue={route.clue} />;
@@ -243,94 +235,24 @@ function RouteSwitch({ route, onSearch }: { route: RouteData; onSearch: () => vo
 
 /* ---------------------------------- home ---------------------------------- */
 
-function HomePage({ site, onSearch }: { site: SiteData; onSearch: () => void }) {
+function HomePage({ site }: { site: SiteData }) {
   const newest = byUpdated(site.evidences);
-  const featured = newest[0];
   const recent = newest.slice(0, 6);
-  const firstPostHref = featured ? evidencePath(featured) : "/dossier/";
 
   return (
     <div className="home-page">
-      <section className="hero shell" aria-labelledby="home-title">
-        <div className="hero__copy" data-reveal>
-          <h1 id="home-title">
-            <em className="hero__kai">怪话</em><span className="hero__cursor" aria-hidden="true" />
-          </h1>
-          <div className="hero__actions">
-            <a className="btn btn--solid" href={firstPostHref}>
-              <span>读最新一篇</span><i aria-hidden="true">→</i>
-            </a>
-            <button className="btn btn--ghost" type="button" onClick={onSearch}>
-              <span>搜索全站</span>
-            </button>
-          </div>
-        </div>
+      <h1 className="sr-only">{siteTitle}</h1>
 
-        <div className="hero__side" data-reveal>
-          <figure className="portrait">
-            <span className="portrait__tape" aria-hidden="true" />
-            <img
-              src="/assets/images/wanzi1-720.jpg"
-              srcSet="/assets/images/wanzi1-720.jpg 720w, /assets/images/wanzi1.jpg 1440w"
-              sizes="(max-width: 900px) 92vw, 430px"
-              alt="mineguai 的头像"
-              fetchPriority="high"
-              decoding="async"
-            />
-          </figure>
-          {featured ? (
-            <a className="latest-card" href={evidencePath(featured)}>
-              <span className="latest-card__chrome" aria-hidden="true">
-                <i className="latest-card__dot latest-card__dot--red" />
-                <i className="latest-card__dot latest-card__dot--yellow" />
-                <i className="latest-card__dot latest-card__dot--green" />
-                <em className="latest-card__path">~/latest.log</em>
-              </span>
-              <span className="latest-card__body">
-                <span className="latest-card__prompt" aria-hidden="true">
-                  <span className="latest-card__user">mineguai</span>
-                  <span className="latest-card__sep">:</span>
-                  <span className="latest-card__dir">~</span>
-                  <span className="latest-card__sep">$</span>
-                </span>
-                <strong className="latest-card__cmd">{shortTitle(featured.meta.title, 30)}</strong>
-                <span className="latest-card__meta">
-                  # {formatDate(featured.meta.updated || featured.meta.date)} · {estimateReadLabel(featured.meta.readingTime)}
-                </span>
-              </span>
-            </a>
-          ) : null}
-        </div>
+      <section className="section shell" aria-label="最近文章">
+        <PostRows posts={recent} quiet />
+        {newest.length > 6 ? <a className="section-head__more" href="/dossier/">所有文章</a> : null}
       </section>
 
-      <Ticker posts={newest} />
-
-      <section className="section shell" aria-labelledby="recent-title">
-        <header className="section-head" data-reveal>
-          <div>
-            <h2 id="recent-title">最近更新</h2>
-          </div>
-          <a className="section-head__more" href="/dossier/">
-            全部 {site.evidences.length} 篇 <i aria-hidden="true">→</i>
-          </a>
-        </header>
-        <PostRows posts={recent} />
-      </section>
-
-      <section className="section shell" aria-labelledby="manifest-title">
-        <header className="section-head" data-reveal>
-          <div>
-            <h2 id="manifest-title">标签</h2>
-          </div>
-          <a className="section-head__more" href="/clues/">
-            全部标签 <i aria-hidden="true">→</i>
-          </a>
-        </header>
+      <section className="section shell home-tags" aria-label="文章标签">
         <nav className="tag-cloud" data-reveal aria-label="热门标签">
           {site.clues.slice(0, 12).map((clue) => (
             <a key={clue.slug} href={cluePath(clue.slug)}>
-              <strong>#{clue.name}</strong>
-              <span>{clue.count} 篇</span>
+              <span>{clue.name}</span>
             </a>
           ))}
         </nav>
@@ -339,58 +261,23 @@ function HomePage({ site, onSearch }: { site: SiteData; onSearch: () => void }) 
   );
 }
 
-function Ticker({ posts }: { posts: EvidenceDocument[] }) {
-  if (!posts.length) return null;
-  const loop = [...posts, ...posts];
-  const duration = Math.max(28, Math.min(72, posts.length * 3.4));
-  return (
-    <div className="ticker" aria-label="最新文章滚动">
-      <div className="ticker__glow" aria-hidden="true" />
-      <div className="ticker__viewport">
-        <div
-          className="ticker__track"
-          style={{ ["--ticker-duration" as string]: `${duration}s` }}
-        >
-          {loop.map((post, index) => {
-            const duplicate = index >= posts.length;
-            return (
-              <a
-                key={`${post.meta.slug}-${index}`}
-                className="ticker__item"
-                href={evidencePath(post)}
-                aria-hidden={duplicate ? "true" : undefined}
-                tabIndex={duplicate ? -1 : undefined}
-              >
-                <span className="ticker__dot" aria-hidden="true" />
-                <span className="ticker__label">{shortTitle(post.meta.title, 24)}</span>
-                <span className="ticker__meta" aria-hidden="true">
-                  {formatDate(post.meta.updated || post.meta.date)}
-                </span>
-              </a>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
 
-function PostRows({ posts, offset = 0 }: { posts: EvidenceDocument[]; offset?: number }) {
+function PostRows({ posts, offset = 0, quiet = false }: { posts: EvidenceDocument[]; offset?: number; quiet?: boolean }) {
   return (
-    <ol className="post-rows" data-reveal>
+    <ol className={`post-rows${quiet ? " post-rows--quiet" : ""}`} data-reveal={quiet ? undefined : true}>
       {posts.map((post, index) => (
         <li key={post.meta.slug}>
           <a className="post-row" href={evidencePath(post)}>
-            <span className="post-row__no">{String(offset + index + 1).padStart(2, "0")}</span>
+            {!quiet ? <span className="post-row__no">{String(offset + index + 1).padStart(2, "0")}</span> : null}
             <span className="post-row__title">
               <strong>{shortTitle(post.meta.title, 40)}</strong>
               {post.meta.draft ? <i className="stamp">草稿</i> : null}
             </span>
             <span className="post-row__meta">
               <time dateTime={post.meta.updated || post.meta.date}>{formatDate(post.meta.updated || post.meta.date)}</time>
-              <em>{estimateReadLabel(post.meta.readingTime)}</em>
+              {!quiet ? <em>{estimateReadLabel(post.meta.readingTime)}</em> : null}
             </span>
-            <span className="post-row__arrow" aria-hidden="true">↗</span>
+            {!quiet ? <span className="post-row__arrow" aria-hidden="true">↗</span> : null}
           </a>
         </li>
       ))}
@@ -771,21 +658,14 @@ function BackToTop() {
 
 /* --------------------------------- footer --------------------------------- */
 
-function SiteFooter({ site }: { site: SiteData }) {
+function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="shell site-footer__row">
-        <div className="site-footer__brand">
-          <strong>{siteTitle}<span className="brand__cursor" aria-hidden="true" /></strong>
-        </div>
-        <nav aria-label="页脚导航">
-          <a href="/rss.xml">RSS</a>
-          <a href="/dossier/">归档</a>
-          <a href="/clues/">标签</a>
-        </nav>
         <p className="site-footer__colophon">
-          © 2026 mineguai · {site.evidences.length} 篇 · {site.clues.length} 标签
+          © 2026 {siteTitle}
         </p>
+        <a className="site-footer__rss" href="/rss.xml">RSS</a>
       </div>
     </footer>
   );

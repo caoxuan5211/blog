@@ -1,6 +1,6 @@
 import type { EvidenceDocument, RouteData, SiteData } from "./types";
 
-export const siteTitle = "怪话怪";
+export const siteTitle = "soken";
 export const siteDescription = "算法笔记、工程记录、日常备忘。";
 export const siteUrl = "https://blog.mineguai.com";
 
