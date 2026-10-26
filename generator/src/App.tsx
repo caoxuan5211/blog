@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { findRoute, postPath, siteTitle, tagPath } from "./routes";
 import { byNewest, estimateReadLabel, formatDate, formatPostDates, normalizeTagSlug, shortTitle } from "./content-utils";
 import type { PostDocument, RouteData, SiteData, Theme } from "./types";
@@ -198,6 +198,7 @@ function RouteSwitch({ route, searchOpen, onCloseSearch }: { route: RouteData; s
 function HomePage({ site, searchOpen, onCloseSearch }: { site: SiteData; searchOpen: boolean; onCloseSearch: () => void }) {
   const posts = byNewest(site.posts);
   const [query, setQuery] = useState("");
+  const browserRef = useRef<HTMLDivElement | null>(null);
   const terms = normalizeSearchText(query).split(" ").filter(Boolean);
   const results = terms.length
     ? posts.filter((post) => terms.every((term) =>
@@ -209,31 +210,46 @@ function HomePage({ site, searchOpen, onCloseSearch }: { site: SiteData; searchO
     if (!searchOpen) setQuery("");
   }, [searchOpen]);
 
+  useEffect(() => {
+    if (!searchOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (!target || browserRef.current?.contains(target) || target.closest(".tool-button--search")) return;
+      onCloseSearch();
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, [searchOpen, onCloseSearch]);
+
   return (
     <div className="home-page">
       <h1 className="sr-only">{siteTitle}</h1>
 
-      {searchOpen ? (
-        <div className="inline-search shell">
-          <Icon name="search" />
-          <input
-            id="search"
-            type="text"
-            role="searchbox"
-            inputMode="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="搜索…"
-            aria-label="搜索文章"
-            autoFocus
-          />
-          <button type="button" onClick={onCloseSearch} aria-label="关闭搜索"><Icon name="close" /></button>
+      <div className="home-browser shell" ref={browserRef}>
+        <div className={`inline-search-wrap${searchOpen ? " is-open" : ""}`} aria-hidden={!searchOpen} inert={!searchOpen}>
+          <div className="inline-search">
+            <Icon name="search" />
+            <input
+              id="search"
+              type="text"
+              role="searchbox"
+              inputMode="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="搜索…"
+              aria-label="搜索文章"
+              autoFocus={searchOpen}
+              disabled={!searchOpen}
+              tabIndex={searchOpen ? 0 : -1}
+            />
+            <button type="button" onClick={onCloseSearch} aria-label="关闭搜索" disabled={!searchOpen}><Icon name="close" /></button>
+          </div>
         </div>
-      ) : null}
 
-      <section className="section shell" aria-label="最近文章">
-        {results.length ? <PostRows posts={results} quiet /> : query ? <p className="inline-search__empty">无结果</p> : <PostRows posts={[]} quiet />}
-      </section>
+        <section className="section" aria-label="最近文章">
+          {results.length ? <PostRows posts={results} quiet /> : query ? <p className="inline-search__empty">无结果</p> : <PostRows posts={[]} quiet />}
+        </section>
+      </div>
     </div>
   );
 }

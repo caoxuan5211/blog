@@ -44,7 +44,8 @@ test("an empty blog still produces the site shell, RSS, and sitemap", async (t) 
   assert.match(await readFile(path.join(distDir, "index.html"), "utf8"), /<title>soken<\/title>/);
   const home = await readFile(path.join(distDir, "index.html"), "utf8");
   assert.match(home, /<button class="tool-button tool-button--search"[^>]*aria-label="搜索"[^>]*aria-expanded="false"><svg/);
-  assert.doesNotMatch(home, /<input id="search"/);
+  assert.match(home, /<div class="inline-search-wrap"[^>]*aria-hidden="true"[^>]*>/);
+  assert.match(home, /<input id="search"[^>]*disabled=""/);
   assert.doesNotMatch(home, /<nav class="site-nav"/);
   assert.match(home, /aria-label="搜索"[\s\S]*aria-label="标签"[\s\S]*aria-label="切换到深色"/);
   assert.match(home, /<a class="tool-button tool-button--tag" href="\/tags\/"[^>]*aria-label="标签"[^>]*><svg/);

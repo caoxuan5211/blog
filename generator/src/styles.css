@@ -422,12 +422,33 @@ svg {
   padding-block: 0;
 }
 
+.inline-search-wrap {
+  max-height: 0;
+  margin-bottom: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-0.4rem);
+  pointer-events: none;
+  transition:
+    max-height 0.24s var(--ease-out),
+    margin-bottom 0.24s var(--ease-out),
+    opacity 0.16s var(--ease-out),
+    transform 0.24s var(--ease-out);
+}
+
+.inline-search-wrap.is-open {
+  max-height: 3.5rem;
+  margin-bottom: 1.5rem;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
 .inline-search {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.65rem;
-  margin-bottom: 1.5rem;
   border-bottom: 1px solid var(--line);
   color: var(--ink-muted);
 }
