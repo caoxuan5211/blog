@@ -54,6 +54,10 @@ test("an empty blog still produces the site shell, RSS, and sitemap", async (t) 
   assert.doesNotMatch(emptyTags, /<h1>标签<\/h1>/);
   assert.match(await readFile(path.join(distDir, "rss.xml"), "utf8"), /<channel>/);
   assert.match(await readFile(path.join(distDir, "sitemap.xml"), "utf8"), /https:\/\/mineguai\.com\//);
+  const favicon = await readFile(path.join(distDir, "favicon.svg"), "utf8");
+  assert.match(favicon, /<circle cx="32" cy="32" r="28"/);
+  assert.doesNotMatch(favicon, /linearGradient|<text|<defs/);
+  await assert.rejects(() => readFile(path.join(distDir, "favicon.ico")));
   assert.equal(await readFile(path.join(distDir, "sitemap.xml"), "utf8").then((text) => /evidence|dossier|clues/.test(text)), false);
 });
 
