@@ -121,7 +121,6 @@ textarea {
 .tool-button,
 .btn,
 .site-header__tools,
-.command-panel,
 .entry-toc,
 .site-footer nav,
 .site-footer__colophon {
@@ -421,6 +420,39 @@ svg {
 .home-page .section {
   margin-block: 0 4rem;
   padding-block: 0;
+}
+
+.inline-search {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-muted);
+}
+
+.inline-search svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.inline-search input {
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.inline-search input::placeholder,
+.inline-search__empty {
+  color: var(--ink-muted);
+}
+
+.inline-search__empty {
+  margin: 0;
 }
 
 .home-page .post-rows {
@@ -1061,182 +1093,6 @@ svg {
   font-size: 0.78rem;
 }
 
-/* --------------------------------- search --------------------------------- */
-
-/* --------------------------------- search --------------------------------- */
-
-.command-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: grid;
-  place-items: start center;
-  padding: min(10vh, 4.5rem) 1rem 2rem;
-  background: color-mix(in srgb, var(--ink) 38%, transparent);
-  backdrop-filter: blur(10px) saturate(1.05);
-  -webkit-backdrop-filter: blur(10px) saturate(1.05);
-  animation: command-fade-in 0.18s var(--ease-out);
-}
-
-.command-layer__backdrop {
-  position: absolute;
-  inset: 0;
-}
-
-.command-panel {
-  position: relative;
-  z-index: 1;
-  width: min(100%, 32rem);
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--line-strong) 80%, transparent);
-  border-radius: 14px;
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow: 0 22px 56px color-mix(in srgb, var(--ink) 20%, transparent);
-  animation: command-rise 0.28s var(--ease-out);
-}
-
-.command-panel__input-row {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.8rem 0.9rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.command-panel__search-icon {
-  display: grid;
-  place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  color: var(--accent);
-}
-
-.command-panel__search-icon svg {
-  width: 1.15rem;
-  height: 1.15rem;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 2;
-}
-
-.command-panel__input-row input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  font-weight: 400;
-  outline: none;
-}
-
-.command-panel__input-row input::placeholder {
-  color: var(--ink-muted);
-  font-weight: 400;
-}
-
-.command-panel__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  min-height: 2rem;
-  padding: 0;
-  border-radius: 999px;
-  color: var(--ink-muted);
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
-  background: transparent;
-}
-
-.command-panel__close {
-  border: 0;
-}
-
-.command-panel__close:hover {
-  color: var(--ink);
-  background: color-mix(in srgb, var(--ink) 7%, transparent);
-}
-
-.command-panel__close svg {
-  width: 0.9rem;
-  height: 0.9rem;
-}
-
-.command-panel__results {
-  max-height: min(52vh, 24rem);
-  overflow: auto;
-  padding: 0;
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
-}
-
-.command-panel__results a {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1rem;
-  align-items: center;
-  padding: 0.8rem 1rem;
-  border-top: 1px solid var(--line);
-  color: var(--ink);
-  transition:
-    background 0.14s var(--ease-out),
-    color 0.14s var(--ease-out);
-}
-
-.command-panel__date {
-  color: var(--ink-muted);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.01em;
-}
-
-.command-panel__title {
-  font-family: var(--font-display);
-  font-size: 0.98rem;
-  font-weight: 500;
-  line-height: 1.3;
-}
-
-.command-panel__results a.is-active {
-  background: color-mix(in srgb, var(--ink) 5%, transparent);
-}
-
-.command-panel__results a.is-active .command-panel__title {
-  color: var(--accent-ink);
-}
-
-.command-panel__empty {
-  display: grid;
-  gap: 0.35rem;
-  margin: 0;
-  padding: 1.5rem 1rem;
-  color: var(--ink-soft);
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  font-weight: 400;
-  text-align: center;
-}
-
-@keyframes command-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes command-rise {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 /* --------------------------------- footer --------------------------------- */
 
 .site-footer {
@@ -1649,7 +1505,6 @@ svg {
   .site-header,
   .site-footer,
   .entry-toc,
-  .command-layer,
   .back-top,
   .code-block__copy,
   .code-block__lang,

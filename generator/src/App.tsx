@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { findRoute, postPath, siteTitle, tagPath } from "./routes";
 import { byNewest, estimateReadLabel, formatDate, formatPostDates, normalizeTagSlug, shortTitle } from "./content-utils";
 import type { PostDocument, RouteData, SiteData, Theme } from "./types";
@@ -39,18 +39,8 @@ function applyTheme(theme: Theme) {
 }
 
 export function App({ route }: AppProps) {
-  const [commandOpen, setCommandOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>("light");
-  const searchTrigger = useRef<HTMLElement | null>(null);
   const isHome = route.kind === "home";
-  const openCommand = () => {
-    searchTrigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    setCommandOpen(true);
-  };
-  const closeCommand = () => {
-    setCommandOpen(false);
-    window.requestAnimationFrame(() => searchTrigger.current?.focus());
-  };
 
   useEffect(() => {
     const initial = readStoredTheme();
@@ -83,20 +73,6 @@ export function App({ route }: AppProps) {
     };
   }, []);
 
-  useEffect(() => {
-    const openSearch = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      const typing = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
-      const plainSlash = event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey;
-      if (!typing && (plainSlash || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k"))) {
-        event.preventDefault();
-        openCommand();
-      }
-    };
-    window.addEventListener("keydown", openSearch);
-    return () => window.removeEventListener("keydown", openSearch);
-  }, []);
-
   const toggleTheme = () => {
     setTheme((current) => {
       const next: Theme = current === "dark" ? "light" : "dark";
@@ -109,13 +85,12 @@ export function App({ route }: AppProps) {
     <>
       <a className="skip-link" href="#content">跳到正文</a>
       {route.kind === "post" ? <div className="scroll-progress" aria-hidden="true" /> : null}
-      <SiteHeader onSearch={openCommand} theme={theme} onToggleTheme={toggleTheme} />
+      <SiteHeader theme={theme} onToggleTheme={toggleTheme} />
       <main id="content" className={`site-main${isHome ? " site-main--home" : ""}`}>
         <RouteSwitch route={route} />
       </main>
       <SiteFooter />
       <BackToTop />
-      <CommandPanel site={route.site} open={commandOpen} onClose={closeCommand} />
     </>
   );
 }
@@ -125,11 +100,9 @@ export function AppForPath({ path, site }: { path: string; site: SiteData }) {
 }
 
 function SiteHeader({
-  onSearch,
   theme,
   onToggleTheme
 }: {
-  onSearch: () => void;
   theme: Theme;
   onToggleTheme: () => void;
 }) {
@@ -141,9 +114,9 @@ function SiteHeader({
           <img className="brand__avatar" src="/assets/images/wanzi1-720.jpg" alt="" width="24" height="24" decoding="async" />
         </a>
         <div className="site-header__tools">
-          <button className="tool-button tool-button--search" type="button" onClick={onSearch} aria-label="搜索">
+          <a className="tool-button tool-button--search" href="/#search" aria-label="搜索">
             <Icon name="search" />
-          </button>
+          </a>
           <a className="tool-button tool-button--tag" href="/tags/" aria-label="标签" title="标签">
             <Icon name="tag" />
           </a>
@@ -181,13 +154,32 @@ function RouteSwitch({ route }: { route: RouteData }) {
 
 function HomePage({ site }: { site: SiteData }) {
   const posts = byNewest(site.posts);
+  const [query, setQuery] = useState("");
+  const terms = normalizeSearchText(query).split(" ").filter(Boolean);
+  const results = terms.length
+    ? posts.filter((post) => terms.every((term) =>
+        normalizeSearchText(`${post.meta.title} ${post.meta.tags.join(" ")} ${post.plainText}`).includes(term)
+      ))
+    : posts;
 
   return (
     <div className="home-page">
       <h1 className="sr-only">{siteTitle}</h1>
 
+      <label className="inline-search shell" htmlFor="search">
+        <Icon name="search" />
+        <input
+          id="search"
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="搜索…"
+          aria-label="搜索文章"
+        />
+      </label>
+
       <section className="section shell" aria-label="最近文章">
-        <PostRows posts={posts} quiet />
+        {results.length ? <PostRows posts={results} quiet /> : <p className="inline-search__empty">无结果</p>}
       </section>
     </div>
   );
@@ -241,7 +233,7 @@ function TagsPage({ site }: { site: SiteData }) {
             </a>
           ))}
         </div>
-      ) : <p className="tag-empty">暂无标签</p>}
+      ) : null}
     </section>
   );
 }
@@ -359,150 +351,6 @@ function NotFoundPage({ site }: { site: SiteData }) {
   );
 }
 
-/* --------------------------------- search --------------------------------- */
-
-function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; onClose: () => void }) {
-  const [query, setQuery] = useState("");
-  const [activeIndex, setActiveIndex] = useState(0);
-  const listRef = useRef<HTMLDivElement | null>(null);
-  const searchSource = useMemo(() => byNewest(site.posts).map((post) => ({
-    post,
-    title: normalizeSearchText(post.meta.title),
-    tags: normalizeSearchText(post.meta.tags.join(" ")),
-    body: normalizeSearchText(post.plainText.slice(0, 4000))
-  })), [site.posts]);
-  const results = useMemo(() => {
-    const terms = normalizeSearchText(query).split(" ").filter(Boolean);
-    if (!terms.length) return searchSource.slice(0, 8).map((item) => item.post);
-    return searchSource
-      .map((item) => ({
-        post: item.post,
-        score: terms.reduce((total, term) => total
-          + (item.title.includes(term) ? 12 : 0)
-          + (item.tags.includes(term) ? 7 : 0)
-          + (item.body.includes(term) ? 2 : 0), 0)
-      }))
-      .filter((item) => item.score > 0)
-      .sort((left, right) => right.score - left.score)
-      .slice(0, 12)
-      .map((item) => item.post);
-  }, [query, searchSource]);
-
-  useEffect(() => setActiveIndex(0), [query, results.length]);
-
-  useEffect(() => {
-    if (!open || !results.length) return;
-    const list = listRef.current;
-    if (!list) return;
-    const active = list.querySelector<HTMLElement>(`#search-result-${activeIndex}`);
-    if (!active) return;
-    active.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [activeIndex, open, results.length]);
-
-  useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previousOverflow; };
-  }, [open]);
-  if (!open) return null;
-
-  const openActiveResult = () => {
-    const target = results[activeIndex];
-    if (!target) return;
-    window.location.href = postPath(target);
-    onClose();
-  };
-
-  const handleKeys = (event: React.KeyboardEvent) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      onClose();
-      return;
-    }
-    if (event.key === "Tab") {
-      const focusable = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(
-        'input, button:not([disabled]), a[href]'
-      ));
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-      return;
-    }
-    if ((event.target as HTMLElement).getAttribute("role") !== "combobox") return;
-    if (!results.length) return;
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setActiveIndex((current) => Math.min(current + 1, results.length - 1));
-    }
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setActiveIndex((current) => Math.max(current - 1, 0));
-    }
-    if (event.key === "Enter") {
-      event.preventDefault();
-      openActiveResult();
-    }
-  };
-
-  return (
-    <div className="command-layer" role="dialog" aria-modal="true" aria-label="搜索文章">
-      <button className="command-layer__backdrop" type="button" onClick={onClose} aria-label="关闭搜索" />
-      <section className="command-panel" onKeyDown={handleKeys}>
-        <div className="command-panel__input-row">
-          <span className="command-panel__search-icon" aria-hidden="true">
-            <Icon name="search" />
-          </span>
-          <input
-            autoFocus
-            aria-label="搜索文章"
-            aria-controls="search-results"
-            aria-expanded="true"
-            aria-activedescendant={results[activeIndex] ? `search-result-${activeIndex}` : undefined}
-            role="combobox"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="搜索…"
-          />
-          <button className="command-panel__close" type="button" onClick={onClose} aria-label="关闭">
-            <Icon name="close" />
-          </button>
-        </div>
-        <div id="search-results" ref={listRef} className="command-panel__results" role="listbox" aria-label="搜索结果">
-          {results.map((post, index) => (
-            <a
-              key={post.meta.slug}
-              id={`search-result-${index}`}
-              href={postPath(post)}
-              className={index === activeIndex ? "is-active" : ""}
-              role="option"
-              aria-selected={index === activeIndex}
-              onMouseMove={() => {
-                if (activeIndex !== index) setActiveIndex(index);
-              }}
-              onClick={onClose}
-            >
-              <strong className="command-panel__title">{shortTitle(post.meta.title, 40)}</strong>
-              <span className="command-panel__date">{formatDate(post.meta.date)}</span>
-            </a>
-          ))}
-          {!results.length ? (
-            <p className="command-panel__empty">
-              无结果
-            </p>
-          ) : null}
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function BackToTop() {
   const [visible, setVisible] = useState(false);
 
@@ -611,9 +459,6 @@ function Icon({ name }: { name: string }) {
   }
   if (name === "tag") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13 13 20 4 11V4h7l9 9Z" /><circle cx="8.5" cy="8.5" r="1" /></svg>;
-  }
-  if (name === "close") {
-    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>;
   }
   if (name === "arrow-up") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" /></svg>;
