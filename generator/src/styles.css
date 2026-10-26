@@ -686,21 +686,6 @@ svg {
   border-bottom: 1px solid var(--line);
 }
 
-.entry-hero__topline {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.85rem;
-}
-
-.entry-back {
-  color: var(--accent-ink);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 650;
-  white-space: nowrap;
-}
-
 .entry-hero h1 {
   margin: 0;
   max-width: 20ch;
@@ -1240,11 +1225,6 @@ svg {
 
   .post-row__meta {
     grid-column: 2;
-  }
-
-  .entry-hero__topline {
-    flex-direction: column;
-    align-items: flex-start;
   }
 
 }

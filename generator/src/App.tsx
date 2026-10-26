@@ -218,7 +218,9 @@ function HomePage({ site, searchOpen, onCloseSearch }: { site: SiteData; searchO
           <Icon name="search" />
           <input
             id="search"
-            type="search"
+            type="text"
+            role="searchbox"
+            inputMode="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="搜索…"
@@ -307,12 +309,9 @@ function PostPage({ post }: { post: PostDocument }) {
   return (
     <article className="entry-shell shell">
       <header className="entry-hero" data-reveal>
-        <div className="entry-hero__topline">
-          <a className="entry-back" href="/">← 返回博客</a>
-        </div>
         <h1>{post.meta.title}</h1>
         <div className="entry-hero__meta">
-          <time dateTime={post.meta.date}>发布于 {dates.published}</time>
+          <time dateTime={post.meta.date}>{dates.published}</time>
           {dates.modified ? <time dateTime={post.meta.updated}>修改于 {dates.modified}</time> : null}
           <span>{estimateReadLabel(post.meta.readingTime)}</span>
           {post.meta.draft ? <span className="stamp">草稿</span> : null}

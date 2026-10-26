@@ -77,7 +77,8 @@ test("plain Unicode Markdown with optional front matter builds a routed article"
   assert.match(article, /<h1>中文标题<\/h1>/);
   assert.doesNotMatch(article, /<h2>中文标题<\/h2>/);
   assert.match(article, /https:\/\/mineguai\.com\/blog\/%E4%B8%AD%E6%96%87%E6%96%87%E7%AB%A0\//);
-  assert.match(article, /<time dateTime="2026-10-12T12:00:00\+08:00">发布于 (?:<!-- -->)?2026\/10\/12<\/time>/);
+  assert.doesNotMatch(article, /返回博客|发布于/);
+  assert.match(article, /<time dateTime="2026-10-12T12:00:00\+08:00">2026\/10\/12<\/time>/);
   assert.match(article, /<time dateTime="2026-10-20T18:30:00\+08:00">修改于 (?:<!-- -->)?2026\/10\/20<\/time>/);
   assert.match(article, /href="\/tags\/ai\/"[^>]*>#(?:<!-- -->)?AI<\/a>/);
   assert.match(article, /href="\/tags\/%E5%81%A5%E5%BA%B7-%E5%AD%A6%E4%B9%A0\/"/);
