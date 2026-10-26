@@ -1,0 +1,39 @@
+{
+  "name": "mineguai-dossier",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "npm run build:ssg",
+    "build:client": "vite build",
+    "build:ssg": "tsx scripts/build.ts",
+    "open": "tsx scripts/open-preview.ts",
+    "write": "tsx scripts/writer.ts",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^5.1.1",
+    "gray-matter": "^4.0.3",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "shiki": "^3.20.0",
+    "smol-toml": "^1.4.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "unified": "^11.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "vite": "^7.2.4"
+  }
+}

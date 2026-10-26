@@ -1,0 +1,6 @@
+generator/node_modules/
+generator/dist/
+generator/.ssg/
+generator/src/generated/site-data.ts
+generator/src/generated/site-data-full.ts
+
