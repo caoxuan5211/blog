@@ -13,6 +13,7 @@ export const routePath = (route: RouteData): string => {
 };
 
 export const postPath = (post: PostDocument): string => `/blog/${post.meta.slug}/`;
+export const tagPath = (slug: string): string => `/tags/${slug}/`;
 
 export const allRoutes = (site: SiteData): RouteData[] => [
   { kind: "home", site },

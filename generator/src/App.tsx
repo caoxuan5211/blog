@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { findRoute, postPath, siteTitle } from "./routes";
-import { byNewest, estimateReadLabel, formatDate, formatPostDates, shortTitle } from "./content-utils";
+import { findRoute, postPath, siteTitle, tagPath } from "./routes";
+import { byNewest, estimateReadLabel, formatDate, formatPostDates, normalizeTagSlug, shortTitle } from "./content-utils";
 import type { PostDocument, RouteData, SiteData, Theme } from "./types";
 
 type AppProps = {
@@ -140,13 +140,13 @@ function SiteHeader({
           <span className="brand__mark">{siteTitle}</span>
           <img className="brand__avatar" src="/assets/images/wanzi1-720.jpg" alt="" width="24" height="24" decoding="async" />
         </a>
-        <nav className="site-nav" aria-label="主导航">
-          <a href="/" className="is-active" aria-current="page"><strong>博客</strong></a>
-        </nav>
         <div className="site-header__tools">
           <button className="tool-button tool-button--search" type="button" onClick={onSearch} aria-label="搜索">
             <Icon name="search" />
           </button>
+          <a className="tool-button tool-button--tag" href="/tags/" aria-label="标签" title="标签">
+            <Icon name="tag" />
+          </a>
           <ThemeRocker theme={theme} onToggle={onToggleTheme} />
         </div>
       </div>
@@ -171,6 +171,8 @@ function ThemeRocker({ theme, onToggle }: { theme: Theme; onToggle: () => void }
 
 function RouteSwitch({ route }: { route: RouteData }) {
   if (route.kind === "home") return <HomePage site={route.site} />;
+  if (route.kind === "tags") return <TagsPage site={route.site} />;
+  if (route.kind === "tag") return <TagPage site={route.site} tag={route.tag} />;
   if (route.kind === "post") return <PostPage post={route.post} />;
   return <NotFoundPage site={route.site} />;
 }
@@ -228,6 +230,34 @@ function PageShell({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
+function TagsPage({ site }: { site: SiteData }) {
+  return (
+    <PageShell title="标签">
+      {site.tags.length ? (
+        <div className="tag-list">
+          {site.tags.map((tag) => (
+            <a key={tag.slug} className="tag-link" href={tagPath(tag.slug)}>
+              <span>{tag.name}</span><small>{tag.count} 篇</small>
+            </a>
+          ))}
+        </div>
+      ) : <p className="tag-empty">暂无标签</p>}
+    </PageShell>
+  );
+}
+
+function TagPage({ site, tag }: { site: SiteData; tag: string }) {
+  const summary = site.tags.find((item) => item.slug === tag);
+  const posts = byNewest(site.posts).filter((post) =>
+    post.meta.tags.some((name) => normalizeTagSlug(name) === tag)
+  );
+  return (
+    <PageShell title={`#${summary?.name || decodeURIComponent(tag)}`}>
+      <PostRows posts={posts} />
+    </PageShell>
+  );
+}
+
 function PostPage({ post }: { post: PostDocument }) {
   const headingView = useMemo(() => buildHeadingView(post.html), [post.html]);
   const dates = formatPostDates(post.meta.date, post.meta.updated);
@@ -243,6 +273,9 @@ function PostPage({ post }: { post: PostDocument }) {
           {dates.modified ? <time dateTime={post.meta.updated}>修改于 {dates.modified}</time> : null}
           <span>{estimateReadLabel(post.meta.readingTime)}</span>
           {post.meta.draft ? <span className="stamp">草稿</span> : null}
+          {post.meta.tags.map((tag) => (
+            <a key={normalizeTagSlug(tag)} className="entry-tag" href={tagPath(normalizeTagSlug(tag))}>#{tag}</a>
+          ))}
         </div>
       </header>
       <div className="entry-body">
@@ -335,6 +368,7 @@ function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; 
   const searchSource = useMemo(() => byNewest(site.posts).map((post) => ({
     post,
     title: normalizeSearchText(post.meta.title),
+    tags: normalizeSearchText(post.meta.tags.join(" ")),
     body: normalizeSearchText(post.plainText.slice(0, 4000))
   })), [site.posts]);
   const results = useMemo(() => {
@@ -345,6 +379,7 @@ function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; 
         post: item.post,
         score: terms.reduce((total, term) => total
           + (item.title.includes(term) ? 12 : 0)
+          + (item.tags.includes(term) ? 7 : 0)
           + (item.body.includes(term) ? 2 : 0), 0)
       }))
       .filter((item) => item.score > 0)
@@ -433,7 +468,7 @@ function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; 
             role="combobox"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="搜索标题或正文…"
+            placeholder="搜索标题、标签或正文…"
           />
           {query ? (
             <button
@@ -540,7 +575,8 @@ function SiteFooter() {
 /* --------------------------------- helpers -------------------------------- */
 
 function commandMeta(post: PostDocument) {
-  return estimateReadLabel(post.meta.readingTime);
+  const tags = post.meta.tags.slice(0, 2).join(" / ");
+  return tags ? `${estimateReadLabel(post.meta.readingTime)} · ${tags}` : estimateReadLabel(post.meta.readingTime);
 }
 
 function buildHeadingView(html: string): { html: string; headings: TocHeading[] } {
@@ -594,6 +630,9 @@ function slugHeading(value: string) {
 function Icon({ name }: { name: string }) {
   if (name === "search") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.6-3.6" /></svg>;
+  }
+  if (name === "tag") {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13 13 20 4 11V4h7l9 9Z" /><circle cx="8.5" cy="8.5" r="1" /></svg>;
   }
   if (name === "close") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>;

@@ -118,7 +118,6 @@ textarea {
   font: inherit;
 }
 
-.site-nav,
 .tool-button,
 .btn,
 .site-header__tools,
@@ -267,7 +266,7 @@ svg {
 
 .site-header__row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 1.1rem;
   min-height: 6rem;
@@ -298,63 +297,6 @@ svg {
   line-height: 1.4;
 }
 
-
-.site-nav {
-  display: flex;
-  justify-self: center;
-  justify-content: center;
-  align-items: center;
-  gap: 2.2rem;
-}
-
-.site-nav a {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0.4rem 0;
-  color: var(--ink-muted);
-  text-align: center;
-  transition: color 0.2s var(--ease-out);
-}
-
-.site-nav a::before {
-  content: "";
-  position: absolute;
-  bottom: 0.25rem;
-  left: 50%;
-  width: 1.1rem;
-  height: 1px;
-  background: currentColor;
-  opacity: 0;
-  transform: translateX(-50%);
-  transition: opacity 0.2s var(--ease-out);
-}
-
-.site-nav a strong {
-  font-size: var(--ui-size);
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 1;
-}
-
-.site-nav a:hover {
-  color: var(--ink);
-}
-
-.site-nav a:hover::before,
-.site-nav a.is-active::before {
-  opacity: 1;
-}
-
-.site-nav a.is-active {
-  color: var(--ink);
-}
-
-.site-nav a.is-active strong {
-  font-weight: 400;
-}
 
 .site-header__tools {
   display: flex;
@@ -405,14 +347,8 @@ svg {
   line-height: 1;
 }
 
-.tool-button--search {
-  width: 36px;
-  justify-content: center;
-  padding-inline: 0;
-}
-
-/* ------------------------------ theme toggle ------------------------------ */
-
+.tool-button--search,
+.tool-button--tag,
 .tool-button--theme {
   width: 36px;
   justify-content: center;
@@ -671,6 +607,35 @@ svg {
   font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 1.2;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+}
+
+.tag-link,
+.entry-tag {
+  color: var(--ink-soft);
+  transition: color 0.18s var(--ease-out);
+}
+
+.tag-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.tag-link:hover,
+.entry-tag:hover {
+  color: var(--ink);
+}
+
+.tag-link small,
+.tag-empty {
+  color: var(--ink-muted);
 }
 
 /* -------------------------------- article --------------------------------- */
@@ -1477,10 +1442,6 @@ svg {
     min-height: 5.5rem;
     padding-block: 1.25rem;
     column-gap: 1rem;
-  }
-
-  .site-nav {
-    display: none;
   }
 
   .site-header__row {

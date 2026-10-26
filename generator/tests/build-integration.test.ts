@@ -45,6 +45,10 @@ test("an empty blog still produces the site shell, RSS, and sitemap", async (t) 
   const home = await readFile(path.join(distDir, "index.html"), "utf8");
   assert.match(home, /<button class="tool-button tool-button--search"[^>]*aria-label="搜索"><svg/);
   assert.doesNotMatch(home, /tool-button--search"[^>]*><span>搜索<\/span>/);
+  assert.doesNotMatch(home, /<nav class="site-nav"/);
+  assert.match(home, /aria-label="搜索"[\s\S]*aria-label="标签"[\s\S]*aria-label="切换到深色"/);
+  assert.match(home, /<a class="tool-button tool-button--tag" href="\/tags\/"[^>]*aria-label="标签"[^>]*><svg/);
+  assert.match(await readFile(path.join(distDir, "tags", "index.html"), "utf8"), /暂无标签/);
   assert.match(await readFile(path.join(distDir, "rss.xml"), "utf8"), /<channel>/);
   assert.match(await readFile(path.join(distDir, "sitemap.xml"), "utf8"), /https:\/\/mineguai\.com\//);
   assert.equal(await readFile(path.join(distDir, "sitemap.xml"), "utf8").then((text) => /evidence|dossier|clues/.test(text)), false);
@@ -73,6 +77,8 @@ test("plain Unicode Markdown with optional front matter builds a routed article"
   assert.match(article, /https:\/\/mineguai\.com\/blog\/%E4%B8%AD%E6%96%87%E6%96%87%E7%AB%A0\//);
   assert.match(article, /<time dateTime="2026-10-12T12:00:00\+08:00">发布于 (?:<!-- -->)?2026\/10\/12<\/time>/);
   assert.match(article, /<time dateTime="2026-10-20T18:30:00\+08:00">修改于 (?:<!-- -->)?2026\/10\/20<\/time>/);
+  assert.match(article, /href="\/tags\/ai\/"[^>]*>#(?:<!-- -->)?AI<\/a>/);
+  assert.match(article, /href="\/tags\/%E5%81%A5%E5%BA%B7-%E5%AD%A6%E4%B9%A0\/"/);
   assert.match(
     await readFile(path.join(distDir, "index.html"), "utf8"),
     /<time dateTime="2026-10-12T12:00:00\+08:00">2026\/10\/12<\/time>/
@@ -93,4 +99,12 @@ test("plain Unicode Markdown with optional front matter builds a routed article"
   assert.equal(await readFile(path.join(generatorRoot, "src", "generated", "site-data-full.ts"), "utf8").then((text) =>
     /"name":"Hidden"|"name":"HTML"|"name":"Health"/.test(text)
   ), false);
+  const tagIndex = await readFile(path.join(distDir, "tags", "index.html"), "utf8");
+  assert.match(tagIndex, /href="\/tags\/ai\/"/);
+  assert.match(tagIndex, /AI[\s\S]*2(?:<!-- -->)? 篇/);
+  assert.match(tagIndex, /LLM[\s\S]*1(?:<!-- -->)? 篇/);
+  const aiPage = await readFile(path.join(distDir, "tags", "ai", "index.html"), "utf8");
+  assert.match(aiPage, /中文标题/);
+  assert.match(aiPage, /Second/);
+  assert.doesNotMatch(aiPage, />Plain</);
 });
