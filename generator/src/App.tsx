@@ -148,7 +148,6 @@ function SiteHeader({
       <div className="shell site-header__row">
         <a className="brand" href="/" aria-label={`${siteTitle}，返回首页`}>
           <span className="brand__mark">{siteTitle}</span>
-          <img className="brand__avatar" src="/assets/images/wanzi1-720.jpg" alt="" width="24" height="24" decoding="async" />
         </a>
         <div className="site-header__tools">
           <button

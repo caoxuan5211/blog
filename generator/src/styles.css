@@ -83,6 +83,14 @@ html[data-theme="dark"] {
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Soken Wordmark";
+  src: url("/assets/fonts/LXGWWenKai-Medium-subset.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 *,
 *::before,
 *::after {
@@ -274,7 +282,6 @@ svg {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
   min-height: 44px;
   color: var(--ink);
   transition: opacity 0.18s var(--ease-out), transform 0.18s var(--ease-out);
@@ -289,11 +296,14 @@ svg {
 }
 
 .brand__mark {
-  font-family: var(--font-sans);
-  font-size: 22px;
-  font-weight: 400;
-  letter-spacing: -0.025em;
-  line-height: 1.4;
+  display: inline-block;
+  font-family: "Soken Wordmark", "Palatino Linotype", Georgia, serif;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: 0.055em;
+  line-height: 1;
+  transform: skewX(-7deg);
+  transform-origin: left center;
 }
 
 
@@ -400,15 +410,6 @@ svg {
   gap: 0;
   padding-top: clamp(3.5rem, 8.5vh, 7rem);
 }
-
-.brand__avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex: 0 0 auto;
-}
-
 
 /* -------------------------------- sections -------------------------------- */
 
@@ -1179,12 +1180,7 @@ svg {
   }
 
   .brand__mark {
-    font-size: 18px;
-  }
-
-  .brand__avatar {
-    width: 24px;
-    height: 24px;
+    font-size: 23px;
   }
 
   .home-page {

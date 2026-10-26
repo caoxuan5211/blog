@@ -360,7 +360,6 @@ const renderPage = async (route: RouteData, template: string, render: (route: Ro
   const title = pageTitle(route);
   const description = route.kind === "post" ? route.post.plainText.slice(0, 140) : siteDescription;
   const canonical = new URL(routePath(route), siteUrl).href;
-  const image = new URL("/assets/images/wanzi1.jpg", siteUrl).href;
   const isArticle = route.kind === "post";
   const isNotFound = route.kind === "not-found";
   const structuredData = isNotFound ? null : isArticle
@@ -372,7 +371,6 @@ const renderPage = async (route: RouteData, template: string, render: (route: Ro
         datePublished: route.post.meta.date,
         dateModified: route.post.meta.updated || route.post.meta.date,
         mainEntityOfPage: canonical,
-        image,
         author: { "@type": "Person", name: siteTitle, url: siteUrl },
         publisher: { "@type": "Person", name: siteTitle, url: siteUrl }
       }
@@ -382,7 +380,6 @@ const renderPage = async (route: RouteData, template: string, render: (route: Ro
         name: siteTitle,
         description: siteDescription,
         url: canonical,
-        image,
         author: { "@type": "Person", name: siteTitle, url: siteUrl }
       };
   const socialMeta = [
@@ -393,12 +390,9 @@ const renderPage = async (route: RouteData, template: string, render: (route: Ro
     `<meta property="og:title" content="${escapeHtml(title)}" />`,
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
     `<meta property="og:url" content="${canonical}" />`,
-    `<meta property="og:image" content="${image}" />`,
-    `<meta property="og:image:alt" content="${escapeHtml(siteTitle)} 的头像" />`,
     `<meta name="twitter:card" content="summary" />`,
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
-    `<meta name="twitter:image" content="${image}" />`,
     isArticle ? `<meta property="article:published_time" content="${route.post.meta.date}" />` : "",
     isArticle ? `<meta property="article:modified_time" content="${route.post.meta.updated || route.post.meta.date}" />` : "",
     isNotFound ? "" : `<link rel="canonical" href="${canonical}" />`,

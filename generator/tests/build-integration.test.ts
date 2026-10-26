@@ -43,6 +43,7 @@ test("an empty blog still produces the site shell, RSS, and sitemap", async (t) 
 
   assert.match(await readFile(path.join(distDir, "index.html"), "utf8"), /<title>soken<\/title>/);
   const home = await readFile(path.join(distDir, "index.html"), "utf8");
+  assert.doesNotMatch(home, /brand__avatar|wanzi1/);
   assert.match(home, /<button class="tool-button tool-button--search"[^>]*aria-label="搜索"[^>]*aria-expanded="false"><svg/);
   assert.match(home, /<div class="inline-search-wrap"[^>]*aria-hidden="true"[^>]*>/);
   assert.match(home, /<input id="search"[^>]*disabled=""/);
@@ -79,6 +80,7 @@ test("plain Unicode Markdown with optional front matter builds a routed article"
   runBuild(repo, blog);
 
   const article = await readFile(path.join(distDir, "blog", "中文文章", "index.html"), "utf8");
+  assert.doesNotMatch(article, /wanzi1/);
   assert.match(article, /<h1>中文标题<\/h1>/);
   assert.doesNotMatch(article, /<h2>中文标题<\/h2>/);
   assert.match(article, /https:\/\/mineguai\.com\/blog\/%E4%B8%AD%E6%96%87%E6%96%87%E7%AB%A0\//);
