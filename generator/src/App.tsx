@@ -40,6 +40,7 @@ function applyTheme(theme: Theme) {
 
 export function App({ route }: AppProps) {
   const [theme, setTheme] = useState<Theme>("light");
+  const [searchOpen, setSearchOpen] = useState(false);
   const isHome = route.kind === "home";
 
   useEffect(() => {
@@ -73,6 +74,38 @@ export function App({ route }: AppProps) {
     };
   }, []);
 
+  useEffect(() => {
+    setSearchOpen(route.kind === "home" && window.location.hash === "#search");
+  }, [route.kind]);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setSearchOpen(false);
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [searchOpen]);
+
+  const toggleSearch = () => {
+    if (!isHome) {
+      window.location.href = "/#search";
+      return;
+    }
+    setSearchOpen((current) => {
+      const next = !current;
+      window.history.replaceState(null, "", next ? "/#search" : window.location.pathname + window.location.search);
+      return next;
+    });
+  };
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  };
+
   const toggleTheme = () => {
     setTheme((current) => {
       const next: Theme = current === "dark" ? "light" : "dark";
@@ -85,9 +118,9 @@ export function App({ route }: AppProps) {
     <>
       <a className="skip-link" href="#content">跳到正文</a>
       {route.kind === "post" ? <div className="scroll-progress" aria-hidden="true" /> : null}
-      <SiteHeader theme={theme} onToggleTheme={toggleTheme} />
+      <SiteHeader searchOpen={searchOpen} onToggleSearch={toggleSearch} theme={theme} onToggleTheme={toggleTheme} />
       <main id="content" className={`site-main${isHome ? " site-main--home" : ""}`}>
-        <RouteSwitch route={route} />
+        <RouteSwitch route={route} searchOpen={searchOpen} onCloseSearch={closeSearch} />
       </main>
       <SiteFooter />
       <BackToTop />
@@ -100,9 +133,13 @@ export function AppForPath({ path, site }: { path: string; site: SiteData }) {
 }
 
 function SiteHeader({
+  searchOpen,
+  onToggleSearch,
   theme,
   onToggleTheme
 }: {
+  searchOpen: boolean;
+  onToggleSearch: () => void;
   theme: Theme;
   onToggleTheme: () => void;
 }) {
@@ -114,9 +151,15 @@ function SiteHeader({
           <img className="brand__avatar" src="/assets/images/wanzi1-720.jpg" alt="" width="24" height="24" decoding="async" />
         </a>
         <div className="site-header__tools">
-          <a className="tool-button tool-button--search" href="/#search" aria-label="搜索">
+          <button
+            className="tool-button tool-button--search"
+            type="button"
+            onClick={onToggleSearch}
+            aria-label="搜索"
+            aria-expanded={searchOpen}
+          >
             <Icon name="search" />
-          </a>
+          </button>
           <a className="tool-button tool-button--tag" href="/tags/" aria-label="标签" title="标签">
             <Icon name="tag" />
           </a>
@@ -142,8 +185,8 @@ function ThemeRocker({ theme, onToggle }: { theme: Theme; onToggle: () => void }
   );
 }
 
-function RouteSwitch({ route }: { route: RouteData }) {
-  if (route.kind === "home") return <HomePage site={route.site} />;
+function RouteSwitch({ route, searchOpen, onCloseSearch }: { route: RouteData; searchOpen: boolean; onCloseSearch: () => void }) {
+  if (route.kind === "home") return <HomePage site={route.site} searchOpen={searchOpen} onCloseSearch={onCloseSearch} />;
   if (route.kind === "tags") return <TagsPage site={route.site} />;
   if (route.kind === "tag") return <TagPage site={route.site} tag={route.tag} />;
   if (route.kind === "post") return <PostPage post={route.post} />;
@@ -152,7 +195,7 @@ function RouteSwitch({ route }: { route: RouteData }) {
 
 /* ---------------------------------- home ---------------------------------- */
 
-function HomePage({ site }: { site: SiteData }) {
+function HomePage({ site, searchOpen, onCloseSearch }: { site: SiteData; searchOpen: boolean; onCloseSearch: () => void }) {
   const posts = byNewest(site.posts);
   const [query, setQuery] = useState("");
   const terms = normalizeSearchText(query).split(" ").filter(Boolean);
@@ -162,24 +205,32 @@ function HomePage({ site }: { site: SiteData }) {
       ))
     : posts;
 
+  useEffect(() => {
+    if (!searchOpen) setQuery("");
+  }, [searchOpen]);
+
   return (
     <div className="home-page">
       <h1 className="sr-only">{siteTitle}</h1>
 
-      <label className="inline-search shell" htmlFor="search">
-        <Icon name="search" />
-        <input
-          id="search"
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="搜索…"
-          aria-label="搜索文章"
-        />
-      </label>
+      {searchOpen ? (
+        <div className="inline-search shell">
+          <Icon name="search" />
+          <input
+            id="search"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="搜索…"
+            aria-label="搜索文章"
+            autoFocus
+          />
+          <button type="button" onClick={onCloseSearch} aria-label="关闭搜索"><Icon name="close" /></button>
+        </div>
+      ) : null}
 
       <section className="section shell" aria-label="最近文章">
-        {results.length ? <PostRows posts={results} quiet /> : <p className="inline-search__empty">无结果</p>}
+        {results.length ? <PostRows posts={results} quiet /> : query ? <p className="inline-search__empty">无结果</p> : <PostRows posts={[]} quiet />}
       </section>
     </div>
   );
@@ -459,6 +510,9 @@ function Icon({ name }: { name: string }) {
   }
   if (name === "tag") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13 13 20 4 11V4h7l9 9Z" /><circle cx="8.5" cy="8.5" r="1" /></svg>;
+  }
+  if (name === "close") {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>;
   }
   if (name === "arrow-up") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" /></svg>;

@@ -424,7 +424,7 @@ svg {
 
 .inline-search {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.65rem;
   margin-bottom: 1.5rem;
@@ -449,6 +449,23 @@ svg {
 .inline-search input::placeholder,
 .inline-search__empty {
   color: var(--ink-muted);
+}
+
+.inline-search button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--ink-muted);
+}
+
+.inline-search button:hover {
+  color: var(--ink);
+}
+
+.inline-search button svg {
+  width: 0.9rem;
+  height: 0.9rem;
 }
 
 .inline-search__empty {
@@ -1232,42 +1249,6 @@ svg {
 
 }
 
-/* ----------------------- cross-document transitions ----------------------- */
-
-@view-transition {
-  navigation: auto;
-}
-
-/* Header persists across pages: pin it so only the content cross-fades. */
-.site-header {
-  view-transition-name: site-header;
-}
-
-::view-transition-old(root) {
-  animation: vt-leave 0.14s var(--ease-out) both;
-}
-
-::view-transition-new(root) {
-  animation: vt-enter 0.24s var(--ease-out) both;
-}
-
-@keyframes vt-leave {
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes vt-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 /* ------------------------------- code blocks ------------------------------ */
 
 .code-block {
@@ -1477,15 +1458,6 @@ svg {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
-  }
-
-  @view-transition {
-    navigation: none;
-  }
-
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none;
   }
 
   *,
