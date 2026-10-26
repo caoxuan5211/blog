@@ -48,7 +48,9 @@ test("an empty blog still produces the site shell, RSS, and sitemap", async (t) 
   assert.doesNotMatch(home, /<nav class="site-nav"/);
   assert.match(home, /aria-label="搜索"[\s\S]*aria-label="标签"[\s\S]*aria-label="切换到深色"/);
   assert.match(home, /<a class="tool-button tool-button--tag" href="\/tags\/"[^>]*aria-label="标签"[^>]*><svg/);
-  assert.match(await readFile(path.join(distDir, "tags", "index.html"), "utf8"), /暂无标签/);
+  const emptyTags = await readFile(path.join(distDir, "tags", "index.html"), "utf8");
+  assert.match(emptyTags, /暂无标签/);
+  assert.doesNotMatch(emptyTags, /<h1>标签<\/h1>/);
   assert.match(await readFile(path.join(distDir, "rss.xml"), "utf8"), /<channel>/);
   assert.match(await readFile(path.join(distDir, "sitemap.xml"), "utf8"), /https:\/\/mineguai\.com\//);
   assert.equal(await readFile(path.join(distDir, "sitemap.xml"), "utf8").then((text) => /evidence|dossier|clues/.test(text)), false);

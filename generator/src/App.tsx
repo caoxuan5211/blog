@@ -232,7 +232,7 @@ function PageShell({ title, children }: { title: string; children: React.ReactNo
 
 function TagsPage({ site }: { site: SiteData }) {
   return (
-    <PageShell title="标签">
+    <section className="page-shell shell tag-page">
       {site.tags.length ? (
         <div className="tag-list">
           {site.tags.map((tag) => (
@@ -242,7 +242,7 @@ function TagsPage({ site }: { site: SiteData }) {
           ))}
         </div>
       ) : <p className="tag-empty">暂无标签</p>}
-    </PageShell>
+    </section>
   );
 }
 
@@ -468,25 +468,11 @@ function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; 
             role="combobox"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="搜索标题、标签或正文…"
+            placeholder="搜索…"
           />
-          {query ? (
-            <button
-              className="command-panel__clear"
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label="清空搜索"
-            >
-              <Icon name="close" />
-            </button>
-          ) : null}
           <button className="command-panel__close" type="button" onClick={onClose} aria-label="关闭">
-            <kbd>esc</kbd>
+            <Icon name="close" />
           </button>
-        </div>
-        <div className="command-panel__meta">
-          <span>{query ? `${results.length} 条结果` : `最近 ${Math.min(results.length, 12)} 篇`}</span>
-          <span className="command-panel__hint">↑↓ 选择 · Enter 打开</span>
         </div>
         <div id="search-results" ref={listRef} className="command-panel__results" role="listbox" aria-label="搜索结果">
           {results.map((post, index) => (
@@ -502,16 +488,13 @@ function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; 
               }}
               onClick={onClose}
             >
-              <span className="command-panel__date">{formatDate(post.meta.date)}</span>
               <strong className="command-panel__title">{shortTitle(post.meta.title, 40)}</strong>
-              <em className="command-panel__sub">{commandMeta(post)}</em>
-              <i className="command-panel__arrow" aria-hidden="true">→</i>
+              <span className="command-panel__date">{formatDate(post.meta.date)}</span>
             </a>
           ))}
           {!results.length ? (
             <p className="command-panel__empty">
-              没有找到匹配内容
-              <small>试试更短的关键词</small>
+              无结果
             </p>
           ) : null}
         </div>
@@ -573,11 +556,6 @@ function SiteFooter() {
 }
 
 /* --------------------------------- helpers -------------------------------- */
-
-function commandMeta(post: PostDocument) {
-  const tags = post.meta.tags.slice(0, 2).join(" / ");
-  return tags ? `${estimateReadLabel(post.meta.readingTime)} · ${tags}` : estimateReadLabel(post.meta.readingTime);
-}
 
 function buildHeadingView(html: string): { html: string; headings: TocHeading[] } {
   const used = new Map<string, number>();
