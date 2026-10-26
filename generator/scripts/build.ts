@@ -1,8 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import matter from "gray-matter";
-import { parse as parseToml } from "smol-toml";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
@@ -12,20 +10,17 @@ import rehypeSanitize from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
 import { createHighlighter } from "shiki";
 import { build as viteBuild } from "vite";
+import { parsePostSource, slugifyPost, type FrontMatter } from "./content-source";
+import { readGitDates } from "./git-metadata";
 import { allRoutes, routePath, siteDescription, siteTitle, siteUrl } from "../src/routes";
 import type { EvidenceDocument, EvidenceMeta, RouteData, SiteData } from "../src/types";
 
 const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
-const contentDir = path.join(root, "..", "blog");
+const repoRoot = path.resolve(process.env.BLOG_REPO_ROOT || path.join(root, ".."));
+const contentDir = path.resolve(process.env.BLOG_CONTENT_DIR || path.join(repoRoot, "blog"));
 const generatedDir = path.join(root, "src", "generated");
 const distDir = path.join(root, "dist");
 const ssrOutDir = path.join(root, ".ssg");
-
-type FrontMatter = Record<string, unknown>;
-type ParsedMarkdown = {
-  data: FrontMatter;
-  content: string;
-};
 
 const ensureDir = async (target: string) => {
   await fs.mkdir(target, { recursive: true });
@@ -42,15 +37,6 @@ const walk = async (dir: string): Promise<string[]> => {
     })
   );
   return files.flat();
-};
-
-const slugify = (file: string): string => {
-  const relative = path.relative(contentDir, file).replace(/\\/g, "/");
-  const withoutExt = relative.replace(/\.md$/i, "");
-  return withoutExt
-    .split("/")
-    .map((part) => encodeURIComponent(part.trim().toLowerCase().replace(/\s+/g, "-")))
-    .join("/");
 };
 
 const toArray = (value: unknown): string[] => {
@@ -86,28 +72,6 @@ const escapeHtml = (value: string): string =>
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
-
-const parseFrontMatter = (raw: string): ParsedMarkdown => {
-  if (raw.startsWith("+++")) {
-    const match = raw.match(/^\+\+\+\r?\n([\s\S]*?)\r?\n\+\+\+\r?\n?/);
-    if (!match) return { data: {}, content: raw };
-    return {
-      data: parseToml(match[1]) as FrontMatter,
-      content: raw.slice(match[0].length)
-    };
-  }
-  const parsed = matter(raw);
-  return { data: parsed.data, content: parsed.content };
-};
-
-const parseDate = (value: unknown): string => {
-  if (value instanceof Date) return value.toISOString();
-  if (typeof value === "string" && value.trim()) {
-    const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
-  }
-  return new Date(0).toISOString();
-};
 
 const parseCover = (data: FrontMatter): EvidenceMeta["cover"] => {
   const params = data.params;
@@ -313,31 +277,30 @@ const loadSite = async (): Promise<SiteData> => {
   const slugsByBase = new Map<string, string>();
   files.forEach((file) => {
     const base = path.basename(file, ".md").toLowerCase();
-    slugsByBase.set(base, slugify(file));
+    slugsByBase.set(base, slugifyPost(file, contentDir));
   });
 
   const evidences = await Promise.all(
     files.map(async (file) => {
       const raw = await fs.readFile(file, "utf8");
-      const parsed = parseFrontMatter(raw);
-      const body = normalizeRefLinks(parsed.content, slugsByBase);
+      const parsed = parsePostSource(raw, path.basename(file, ".md"));
+      const body = normalizeRefLinks(parsed.body, slugsByBase);
       const html = await renderMarkdown(body);
       const plainText = stripHtml(html);
       const tags = toArray(parsed.data.tags);
       const categories = toArray(parsed.data.categories || parsed.data.category);
       const clues = Array.from(new Set([...tags, ...categories])).sort((a, b) => a.localeCompare(b, "zh-CN"));
-      const date = parseDate(parsed.data.date);
-      const updated = parsed.data.updated ? parseDate(parsed.data.updated) : date;
+      const dates = await readGitDates(repoRoot, file);
       const meta: EvidenceMeta = {
-        title: String(parsed.data.title || path.basename(file, ".md")),
-        date,
-        updated,
+        title: parsed.title,
+        date: dates.published,
+        updated: dates.modified,
         draft: toBoolean(parsed.data.draft),
         tags,
         categories,
         clues,
-        slug: slugify(file),
-        sourcePath: path.relative(root, file).replace(/\\/g, "/"),
+        slug: slugifyPost(file, contentDir),
+        sourcePath: path.relative(repoRoot, file).replace(/\\/g, "/"),
         readingTime: readTime(plainText),
         cover: parseCover(parsed.data)
       };

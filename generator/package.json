@@ -8,8 +8,7 @@
     "build": "npm run build:ssg",
     "build:client": "vite build",
     "build:ssg": "tsx scripts/build.ts",
-    "open": "tsx scripts/open-preview.ts",
-    "write": "tsx scripts/writer.ts",
+    "test": "tsx --test --test-concurrency=1 tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview --host 127.0.0.1"
   },
