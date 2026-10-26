@@ -1,17 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { cluePath, evidencePath, findRoute, routePath, siteTitle } from "./routes";
-import { byNewest, byUpdated, estimateReadLabel, formatDate, formatPostDates, normalizeClueSlug, shortTitle } from "./content-utils";
-import type { EvidenceDocument, RouteData, SiteData, Theme } from "./types";
+import { findRoute, postPath, siteTitle } from "./routes";
+import { byNewest, estimateReadLabel, formatDate, formatPostDates, shortTitle } from "./content-utils";
+import type { PostDocument, RouteData, SiteData, Theme } from "./types";
 
 type AppProps = {
   route: RouteData;
 };
-
-const navItems = [
-  { label: "首页", href: "/" },
-  { label: "归档", href: "/dossier/" },
-  { label: "标签", href: "/clues/" }
-];
 
 const THEME_KEY = "guai-theme";
 
@@ -114,10 +108,10 @@ export function App({ route }: AppProps) {
   return (
     <>
       <a className="skip-link" href="#content">跳到正文</a>
-      {route.kind === "evidence" ? <div className="scroll-progress" aria-hidden="true" /> : null}
-      <SiteHeader route={route} onSearch={openCommand} theme={theme} onToggleTheme={toggleTheme} />
+      {route.kind === "post" ? <div className="scroll-progress" aria-hidden="true" /> : null}
+      <SiteHeader onSearch={openCommand} theme={theme} onToggleTheme={toggleTheme} />
       <main id="content" className={`site-main${isHome ? " site-main--home" : ""}`}>
-        <RouteSwitch route={route} onSearch={openCommand} />
+        <RouteSwitch route={route} />
       </main>
       <SiteFooter />
       <BackToTop />
@@ -131,29 +125,14 @@ export function AppForPath({ path, site }: { path: string; site: SiteData }) {
 }
 
 function SiteHeader({
-  route,
   onSearch,
   theme,
   onToggleTheme
 }: {
-  route: RouteData;
   onSearch: () => void;
   theme: Theme;
   onToggleTheme: () => void;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const currentPath = routePath(route);
-  const isActive = (href: string) => href === "/" ? route.kind === "home" : currentPath.startsWith(href);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const close = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-    window.addEventListener("keydown", close);
-    return () => window.removeEventListener("keydown", close);
-  }, [menuOpen]);
-
   return (
     <header className="site-header">
       <div className="shell site-header__row">
@@ -162,27 +141,14 @@ function SiteHeader({
           <img className="brand__avatar" src="/assets/images/wanzi1-720.jpg" alt="" width="24" height="24" decoding="async" />
         </a>
         <nav className="site-nav" aria-label="主导航">
-          <NavLinks isActive={isActive} />
+          <a href="/" className="is-active" aria-current="page"><strong>博客</strong></a>
         </nav>
         <div className="site-header__tools">
           <button className="tool-button tool-button--search" type="button" onClick={onSearch} aria-label="搜索">
             <span>搜索</span>
           </button>
           <ThemeRocker theme={theme} onToggle={onToggleTheme} />
-          <button
-            className="tool-button tool-button--icon"
-            type="button"
-            aria-expanded={menuOpen}
-            aria-controls="mobile-nav"
-            onClick={() => setMenuOpen((value) => !value)}
-          >
-            <Icon name={menuOpen ? "close" : "menu"} />
-            <span className="sr-only">切换导航</span>
-          </button>
         </div>
-      </div>
-      <div id="mobile-nav" className={`mobile-nav-panel${menuOpen ? " is-open" : ""}`} hidden={!menuOpen}>
-        <NavLinks isActive={isActive} onNavigate={() => setMenuOpen(false)} />
       </div>
     </header>
   );
@@ -203,72 +169,36 @@ function ThemeRocker({ theme, onToggle }: { theme: Theme; onToggle: () => void }
   );
 }
 
-function NavLinks({ isActive, onNavigate }: { isActive: (href: string) => boolean; onNavigate?: () => void }) {
-  return (
-    <>
-      {navItems.map((item) => {
-        const active = isActive(item.href);
-        return (
-          <a
-            key={item.href}
-            href={item.href}
-            className={active ? "is-active" : undefined}
-            aria-current={active ? "page" : undefined}
-            onClick={onNavigate}
-          >
-            <strong>{item.label}</strong>
-          </a>
-        );
-      })}
-    </>
-  );
-}
-
-function RouteSwitch({ route, onSearch }: { route: RouteData; onSearch: () => void }) {
+function RouteSwitch({ route }: { route: RouteData }) {
   if (route.kind === "home") return <HomePage site={route.site} />;
-  if (route.kind === "dossier") return <DossierPage site={route.site} />;
-  if (route.kind === "clues") return <CluesPage site={route.site} />;
-  if (route.kind === "clue") return <CluePage site={route.site} clue={route.clue} />;
-  if (route.kind === "evidence") return <EvidencePage evidence={route.evidence} />;
+  if (route.kind === "post") return <PostPage post={route.post} />;
   return <NotFoundPage site={route.site} />;
 }
 
 /* ---------------------------------- home ---------------------------------- */
 
 function HomePage({ site }: { site: SiteData }) {
-  const newest = byUpdated(site.evidences);
-  const recent = newest.slice(0, 6);
+  const posts = byNewest(site.posts);
 
   return (
     <div className="home-page">
       <h1 className="sr-only">{siteTitle}</h1>
 
       <section className="section shell" aria-label="最近文章">
-        <PostRows posts={recent} quiet />
-        {newest.length > 6 ? <a className="section-head__more" href="/dossier/">所有文章</a> : null}
-      </section>
-
-      <section className="section shell home-tags" aria-label="文章标签">
-        <nav className="tag-cloud" data-reveal aria-label="热门标签">
-          {site.clues.slice(0, 12).map((clue) => (
-            <a key={clue.slug} href={cluePath(clue.slug)}>
-              <span>{clue.name}</span>
-            </a>
-          ))}
-        </nav>
+        <PostRows posts={posts} quiet />
       </section>
     </div>
   );
 }
 
 
-function PostRows({ posts, offset = 0, quiet = false }: { posts: EvidenceDocument[]; offset?: number; quiet?: boolean }) {
+function PostRows({ posts, quiet = false }: { posts: PostDocument[]; quiet?: boolean }) {
   return (
     <ol className={`post-rows${quiet ? " post-rows--quiet" : ""}`} data-reveal={quiet ? undefined : true}>
       {posts.map((post, index) => (
         <li key={post.meta.slug}>
-          <a className="post-row" href={evidencePath(post)}>
-            {!quiet ? <span className="post-row__no">{String(offset + index + 1).padStart(2, "0")}</span> : null}
+          <a className="post-row" href={postPath(post)}>
+            {!quiet ? <span className="post-row__no">{String(index + 1).padStart(2, "0")}</span> : null}
             <span className="post-row__title">
               <strong>{shortTitle(post.meta.title, 40)}</strong>
               {post.meta.draft ? <i className="stamp">草稿</i> : null}
@@ -298,98 +228,34 @@ function PageShell({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-function DossierPage({ site }: { site: SiteData }) {
-  const grouped = useMemo(() => {
-    const map = new Map<string, EvidenceDocument[]>();
-    byNewest(site.evidences).forEach((evidence) => {
-      const year = new Date(evidence.meta.date).getFullYear().toString();
-      map.set(year, [...(map.get(year) || []), evidence]);
-    });
-    return Array.from(map.entries());
-  }, [site.evidences]);
-
-  let offset = 0;
-  return (
-    <PageShell title="归档">
-      <div className="archive-stack">
-        {grouped.map(([year, posts]) => {
-          const start = offset;
-          offset += posts.length;
-          return (
-            <section key={year} className="archive-year" data-reveal>
-              <div className="archive-year__label">
-                <strong>{year}</strong>
-                <span>{posts.length} 篇</span>
-              </div>
-              <PostRows posts={posts} offset={start} />
-            </section>
-          );
-        })}
-      </div>
-    </PageShell>
-  );
-}
-
-function CluesPage({ site }: { site: SiteData }) {
-  const clues = [...site.clues].sort((left, right) => right.count - left.count);
-  return (
-    <PageShell title="标签">
-      <div className="tag-cloud" data-reveal>
-        {clues.map((clue) => (
-          <a key={clue.slug} href={cluePath(clue.slug)}>
-            <strong>#{clue.name}</strong>
-            <span>{clue.count} 篇</span>
-          </a>
-        ))}
-      </div>
-    </PageShell>
-  );
-}
-
-function CluePage({ site, clue }: { site: SiteData; clue: string }) {
-  const target = site.clues.find((item) => item.slug === clue);
-  const posts = byNewest(site.evidences).filter((evidence) =>
-    evidence.meta.clues.some((item) => normalizeClueSlug(item) === clue)
-  );
-
-  return (
-    <PageShell title={`#${target?.name || clue}`}>
-      <PostRows posts={posts} />
-    </PageShell>
-  );
-}
-
-function EvidencePage({ evidence }: { evidence: EvidenceDocument }) {
-  const headingView = useMemo(() => buildHeadingView(evidence.html), [evidence.html]);
-  const dates = formatPostDates(evidence.meta.date, evidence.meta.updated);
+function PostPage({ post }: { post: PostDocument }) {
+  const headingView = useMemo(() => buildHeadingView(post.html), [post.html]);
+  const dates = formatPostDates(post.meta.date, post.meta.updated);
   return (
     <article className="entry-shell shell">
       <header className="entry-hero" data-reveal>
         <div className="entry-hero__topline">
-          <a className="entry-back" href="/dossier/">← 返回归档</a>
+          <a className="entry-back" href="/">← 返回博客</a>
         </div>
-        <h1>{evidence.meta.title}</h1>
+        <h1>{post.meta.title}</h1>
         <div className="entry-hero__meta">
-          <time dateTime={evidence.meta.date}>发布于 {dates.published}</time>
-          {dates.modified ? <time dateTime={evidence.meta.updated}>修改于 {dates.modified}</time> : null}
-          <span>{estimateReadLabel(evidence.meta.readingTime)}</span>
-          {evidence.meta.draft ? <span className="stamp">草稿</span> : null}
-          {evidence.meta.clues.map((clue) => (
-            <a key={clue} href={cluePath(normalizeClueSlug(clue))}>#{clue}</a>
-          ))}
+          <time dateTime={post.meta.date}>发布于 {dates.published}</time>
+          {dates.modified ? <time dateTime={post.meta.updated}>修改于 {dates.modified}</time> : null}
+          <span>{estimateReadLabel(post.meta.readingTime)}</span>
+          {post.meta.draft ? <span className="stamp">草稿</span> : null}
         </div>
       </header>
       <div className="entry-body">
         <div className="manuscript" dangerouslySetInnerHTML={{ __html: headingView.html }} />
       </div>
-      <EvidenceToc headings={headingView.headings} />
+      <PostToc headings={headingView.headings} />
     </article>
   );
 }
 
 type TocHeading = { id: string; level: number; text: string };
 
-function EvidenceToc({ headings }: { headings: TocHeading[] }) {
+function PostToc({ headings }: { headings: TocHeading[] }) {
   const [open, setOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -455,7 +321,7 @@ function EvidenceToc({ headings }: { headings: TocHeading[] }) {
 function NotFoundPage({ site }: { site: SiteData }) {
   return (
     <PageShell title="404">
-      <PostRows posts={byNewest(site.evidences).slice(0, 4)} />
+      <PostRows posts={byNewest(site.posts).slice(0, 4)} />
     </PageShell>
   );
 }
@@ -466,27 +332,25 @@ function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; 
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const listRef = useRef<HTMLDivElement | null>(null);
-  const searchSource = useMemo(() => byUpdated(site.evidences).map((evidence) => ({
-    evidence,
-    title: normalizeSearchText(evidence.meta.title),
-    clues: normalizeSearchText(evidence.meta.clues.join(" ")),
-    body: normalizeSearchText(evidence.plainText.slice(0, 4000))
-  })), [site.evidences]);
+  const searchSource = useMemo(() => byNewest(site.posts).map((post) => ({
+    post,
+    title: normalizeSearchText(post.meta.title),
+    body: normalizeSearchText(post.plainText.slice(0, 4000))
+  })), [site.posts]);
   const results = useMemo(() => {
     const terms = normalizeSearchText(query).split(" ").filter(Boolean);
-    if (!terms.length) return searchSource.slice(0, 8).map((item) => item.evidence);
+    if (!terms.length) return searchSource.slice(0, 8).map((item) => item.post);
     return searchSource
       .map((item) => ({
-        evidence: item.evidence,
+        post: item.post,
         score: terms.reduce((total, term) => total
           + (item.title.includes(term) ? 12 : 0)
-          + (item.clues.includes(term) ? 7 : 0)
           + (item.body.includes(term) ? 2 : 0), 0)
       }))
       .filter((item) => item.score > 0)
       .sort((left, right) => right.score - left.score)
       .slice(0, 12)
-      .map((item) => item.evidence);
+      .map((item) => item.post);
   }, [query, searchSource]);
 
   useEffect(() => setActiveIndex(0), [query, results.length]);
@@ -511,7 +375,7 @@ function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; 
   const openActiveResult = () => {
     const target = results[activeIndex];
     if (!target) return;
-    window.location.href = evidencePath(target);
+    window.location.href = postPath(target);
     onClose();
   };
 
@@ -569,7 +433,7 @@ function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; 
             role="combobox"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="搜索标题、标签或正文…"
+            placeholder="搜索标题或正文…"
           />
           {query ? (
             <button
@@ -590,11 +454,11 @@ function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; 
           <span className="command-panel__hint">↑↓ 选择 · Enter 打开</span>
         </div>
         <div id="search-results" ref={listRef} className="command-panel__results" role="listbox" aria-label="搜索结果">
-          {results.map((evidence, index) => (
+          {results.map((post, index) => (
             <a
-              key={evidence.meta.slug}
+              key={post.meta.slug}
               id={`search-result-${index}`}
-              href={evidencePath(evidence)}
+              href={postPath(post)}
               className={index === activeIndex ? "is-active" : ""}
               role="option"
               aria-selected={index === activeIndex}
@@ -603,16 +467,16 @@ function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; 
               }}
               onClick={onClose}
             >
-              <span className="command-panel__date">{formatDate(evidence.meta.date)}</span>
-              <strong className="command-panel__title">{shortTitle(evidence.meta.title, 40)}</strong>
-              <em className="command-panel__sub">{commandMeta(evidence)}</em>
+              <span className="command-panel__date">{formatDate(post.meta.date)}</span>
+              <strong className="command-panel__title">{shortTitle(post.meta.title, 40)}</strong>
+              <em className="command-panel__sub">{commandMeta(post)}</em>
               <i className="command-panel__arrow" aria-hidden="true">→</i>
             </a>
           ))}
           {!results.length ? (
             <p className="command-panel__empty">
               没有找到匹配内容
-              <small>试试更短的关键词或标签名</small>
+              <small>试试更短的关键词</small>
             </p>
           ) : null}
         </div>
@@ -675,9 +539,8 @@ function SiteFooter() {
 
 /* --------------------------------- helpers -------------------------------- */
 
-function commandMeta(evidence: EvidenceDocument) {
-  const clues = evidence.meta.clues.slice(0, 2).join(" / ");
-  return clues ? `${estimateReadLabel(evidence.meta.readingTime)} · ${clues}` : estimateReadLabel(evidence.meta.readingTime);
+function commandMeta(post: PostDocument) {
+  return estimateReadLabel(post.meta.readingTime);
 }
 
 function buildHeadingView(html: string): { html: string; headings: TocHeading[] } {
@@ -731,9 +594,6 @@ function slugHeading(value: string) {
 function Icon({ name }: { name: string }) {
   if (name === "search") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.6-3.6" /></svg>;
-  }
-  if (name === "menu") {
-    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" /></svg>;
   }
   if (name === "close") {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>;

@@ -44,6 +44,7 @@ test("an empty blog still produces the site shell, RSS, and sitemap", async (t) 
   assert.match(await readFile(path.join(distDir, "index.html"), "utf8"), /<title>soken<\/title>/);
   assert.match(await readFile(path.join(distDir, "rss.xml"), "utf8"), /<channel>/);
   assert.match(await readFile(path.join(distDir, "sitemap.xml"), "utf8"), /https:\/\/mineguai\.com\//);
+  assert.equal(await readFile(path.join(distDir, "sitemap.xml"), "utf8").then((text) => /evidence|dossier|clues/.test(text)), false);
 });
 
 test("plain Unicode Markdown with optional front matter builds a routed article", async (t) => {
@@ -58,15 +59,16 @@ test("plain Unicode Markdown with optional front matter builds a routed article"
 
   runBuild(repo, blog);
 
-  const article = await readFile(path.join(distDir, "evidence", "中文文章", "index.html"), "utf8");
+  const article = await readFile(path.join(distDir, "blog", "中文文章", "index.html"), "utf8");
   assert.match(article, /<h1>中文标题<\/h1>/);
   assert.doesNotMatch(article, /<h2>中文标题<\/h2>/);
-  assert.match(article, /https:\/\/mineguai\.com\/evidence\/%E4%B8%AD%E6%96%87%E6%96%87%E7%AB%A0\//);
+  assert.match(article, /https:\/\/mineguai\.com\/blog\/%E4%B8%AD%E6%96%87%E6%96%87%E7%AB%A0\//);
   assert.match(article, /<time dateTime="2026-10-12T12:00:00\+08:00">发布于 (?:<!-- -->)?2026\/10\/12<\/time>/);
   assert.match(article, /<time dateTime="2026-10-20T18:30:00\+08:00">修改于 (?:<!-- -->)?2026\/10\/20<\/time>/);
-  assert.match(await readFile(path.join(distDir, "clues", "笔记", "index.html"), "utf8"), /#笔记/);
   assert.match(
     await readFile(path.join(distDir, "index.html"), "utf8"),
     /<time dateTime="2026-10-12T12:00:00\+08:00">2026\/10\/12<\/time>/
   );
+  const sitemap = await readFile(path.join(distDir, "sitemap.xml"), "utf8");
+  assert.doesNotMatch(sitemap, /evidence|dossier|clues/);
 });

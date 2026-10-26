@@ -1,13 +1,10 @@
 export type Theme = "dark" | "light";
 
-export type EvidenceMeta = {
+export type PostMeta = {
   title: string;
   date: string;
   updated: string;
   draft: boolean;
-  tags: string[];
-  categories: string[];
-  clues: string[];
   slug: string;
   sourcePath: string;
   readingTime: number;
@@ -18,25 +15,17 @@ export type EvidenceMeta = {
   };
 };
 
-export type EvidenceDocument = {
-  meta: EvidenceMeta;
+export type PostDocument = {
+  meta: PostMeta;
   html: string;
   plainText: string;
 };
 
 export type SiteData = {
-  evidences: EvidenceDocument[];
-  clues: Array<{
-    slug: string;
-    name: string;
-    count: number;
-  }>;
+  posts: PostDocument[];
 };
 
 export type RouteData =
   | { kind: "home"; site: SiteData }
-  | { kind: "dossier"; site: SiteData }
-  | { kind: "clues"; site: SiteData }
-  | { kind: "clue"; site: SiteData; clue: string }
-  | { kind: "evidence"; site: SiteData; evidence: EvidenceDocument }
+  | { kind: "post"; site: SiteData; post: PostDocument }
   | { kind: "not-found"; site: SiteData };

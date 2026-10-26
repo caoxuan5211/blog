@@ -13,7 +13,7 @@ import { build as viteBuild } from "vite";
 import { parsePostSource, slugifyPost, type FrontMatter } from "./content-source";
 import { readGitDates } from "./git-metadata";
 import { allRoutes, routePath, siteDescription, siteTitle, siteUrl } from "../src/routes";
-import type { EvidenceDocument, EvidenceMeta, RouteData, SiteData } from "../src/types";
+import type { PostMeta, RouteData, SiteData } from "../src/types";
 
 const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const repoRoot = path.resolve(process.env.BLOG_REPO_ROOT || path.join(root, ".."));
@@ -37,12 +37,6 @@ const walk = async (dir: string): Promise<string[]> => {
     })
   );
   return files.flat();
-};
-
-const toArray = (value: unknown): string[] => {
-  if (!value) return [];
-  if (Array.isArray(value)) return value.map(String).map((item) => item.trim()).filter(Boolean);
-  return [String(value).trim()].filter(Boolean);
 };
 
 const toBoolean = (value: unknown): boolean => {
@@ -73,7 +67,7 @@ const escapeHtml = (value: string): string =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-const parseCover = (data: FrontMatter): EvidenceMeta["cover"] => {
+const parseCover = (data: FrontMatter): PostMeta["cover"] => {
   const params = data.params;
   if (params && typeof params === "object" && "cover" in params) {
     const cover = (params as Record<string, unknown>).cover;
@@ -99,12 +93,12 @@ const normalizeRefLinks = (markdown: string, slugsByBase: Map<string, string>): 
     .replace(/\{\{<\s*ref\s+"([^"]+)"\s*>\}\}/g, (_, target: string) => {
       const key = target.replace(/\\/g, "/").split("/").pop()?.replace(/\.md$/i, "").toLowerCase() || target.toLowerCase();
       const slug = slugsByBase.get(key);
-      return slug ? `/evidence/${slug}/` : "#missing-ref";
+      return slug ? `/blog/${slug}/` : "#missing-ref";
     })
     .replace(/\{\{<\s*ref\s+([^>\s]+)\s*>\}\}/g, (_, target: string) => {
       const key = String(target).replace(/["']/g, "").replace(/\\/g, "/").split("/").pop()?.replace(/\.md$/i, "").toLowerCase() || String(target).toLowerCase();
       const slug = slugsByBase.get(key);
-      return slug ? `/evidence/${slug}/` : "#missing-ref";
+      return slug ? `/blog/${slug}/` : "#missing-ref";
     });
 
 const normalizeLang = (value: string): string => {
@@ -136,7 +130,7 @@ const assetExists = async (urlPath: string): Promise<boolean> => {
 };
 
 const missingImage = (src: string): string =>
-  `<figure class="missing-evidence"><span>图片缺失</span><code>${escapeHtml(src)}</code></figure>`;
+  `<figure class="missing-asset"><span>图片缺失</span><code>${escapeHtml(src)}</code></figure>`;
 
 const decorateImage = (tag: string, eager = false): string => {
   let next = tag;
@@ -179,7 +173,7 @@ const fixImagePaths = async (html: string): Promise<string> => {
     }
 
     if (src.startsWith("images/")) {
-      const next = `/assets/content/first-blog/${src.replace(/^images\//, "")}`;
+      const next = `/assets/images/${src.replace(/^images\//, "")}`;
       output += (await assetExists(next)) ? decorateImage(`<img${before}src="${next}"${after}>`, eager) : missingImage(src);
       continue;
     }
@@ -280,25 +274,19 @@ const loadSite = async (): Promise<SiteData> => {
     slugsByBase.set(base, slugifyPost(file, contentDir));
   });
 
-  const evidences = await Promise.all(
+  const posts = await Promise.all(
     files.map(async (file) => {
       const raw = await fs.readFile(file, "utf8");
       const parsed = parsePostSource(raw, path.basename(file, ".md"));
       const body = normalizeRefLinks(parsed.body, slugsByBase);
       const html = await renderMarkdown(body);
       const plainText = stripHtml(html);
-      const tags = toArray(parsed.data.tags);
-      const categories = toArray(parsed.data.categories || parsed.data.category);
-      const clues = Array.from(new Set([...tags, ...categories])).sort((a, b) => a.localeCompare(b, "zh-CN"));
       const dates = await readGitDates(repoRoot, file);
-      const meta: EvidenceMeta = {
+      const meta: PostMeta = {
         title: parsed.title,
         date: dates.published,
         updated: dates.modified,
         draft: toBoolean(parsed.data.draft),
-        tags,
-        categories,
-        clues,
         slug: slugifyPost(file, contentDir),
         sourcePath: path.relative(repoRoot, file).replace(/\\/g, "/"),
         readingTime: readTime(plainText),
@@ -308,23 +296,11 @@ const loadSite = async (): Promise<SiteData> => {
     })
   );
 
-  const visibleEvidences = process.env.INCLUDE_DRAFTS === "true"
-    ? evidences
-    : evidences.filter((evidence) => !evidence.meta.draft);
-  visibleEvidences.sort((left, right) => new Date(right.meta.date).getTime() - new Date(left.meta.date).getTime());
-
-  const clueMap = new Map<string, { slug: string; name: string; count: number }>();
-  visibleEvidences.forEach((evidence) => {
-    evidence.meta.clues.forEach((name) => {
-      const slug = encodeURIComponent(name.trim().toLowerCase().replace(/\s+/g, "-"));
-      const current = clueMap.get(slug) || { slug, name, count: 0 };
-      current.count += 1;
-      clueMap.set(slug, current);
-    });
-  });
-
-  const clues = Array.from(clueMap.values()).sort((left, right) => right.count - left.count || left.name.localeCompare(right.name, "zh-CN"));
-  return { evidences: visibleEvidences, clues };
+  const visiblePosts = process.env.INCLUDE_DRAFTS === "true"
+    ? posts
+    : posts.filter((post) => !post.meta.draft);
+  visiblePosts.sort((left, right) => new Date(right.meta.date).getTime() - new Date(left.meta.date).getTime());
+  return { posts: visiblePosts };
 };
 
 const writeGeneratedData = async (site: SiteData) => {
@@ -334,10 +310,10 @@ const writeGeneratedData = async (site: SiteData) => {
   // so the bundle stays flat as the number of posts grows.
   const slim: SiteData = {
     ...site,
-    evidences: site.evidences.map((evidence) => ({
-      ...evidence,
+    posts: site.posts.map((post) => ({
+      ...post,
       html: "",
-      plainText: evidence.plainText.slice(0, 4000)
+      plainText: post.plainText.slice(0, 4000)
     }))
   };
   const payload = `import type { SiteData } from "../types";\n\nexport const siteData: SiteData = ${JSON.stringify(slim)};\n`;
@@ -365,34 +341,30 @@ const htmlPathForRoute = (route: RouteData): string => {
 
 const pageTitle = (route: RouteData): string => {
   if (route.kind === "home") return siteTitle;
-  if (route.kind === "dossier") return `归档 · ${siteTitle}`;
-  if (route.kind === "clues") return `标签 · ${siteTitle}`;
-  if (route.kind === "clue") return `#${decodeURIComponent(route.clue)} · ${siteTitle}`;
-  if (route.kind === "evidence") return `${route.evidence.meta.title} · ${siteTitle}`;
+  if (route.kind === "post") return `${route.post.meta.title} · ${siteTitle}`;
   return `页面不存在 · ${siteTitle}`;
 };
 
 const renderPage = async (route: RouteData, template: string, render: (route: RouteData) => string) => {
   const appHtml = render(route);
   const title = pageTitle(route);
-  const description = route.kind === "evidence" ? route.evidence.plainText.slice(0, 140) : siteDescription;
+  const description = route.kind === "post" ? route.post.plainText.slice(0, 140) : siteDescription;
   const canonical = new URL(routePath(route), siteUrl).href;
   const image = new URL("/assets/images/wanzi1.jpg", siteUrl).href;
-  const isArticle = route.kind === "evidence";
+  const isArticle = route.kind === "post";
   const isNotFound = route.kind === "not-found";
   const structuredData = isNotFound ? null : isArticle
     ? {
         "@context": "https://schema.org",
         "@type": "BlogPosting",
-        headline: route.evidence.meta.title,
+        headline: route.post.meta.title,
         description,
-        datePublished: route.evidence.meta.date,
-        dateModified: route.evidence.meta.updated || route.evidence.meta.date,
+        datePublished: route.post.meta.date,
+        dateModified: route.post.meta.updated || route.post.meta.date,
         mainEntityOfPage: canonical,
         image,
         author: { "@type": "Person", name: siteTitle, url: siteUrl },
-        publisher: { "@type": "Person", name: siteTitle, url: siteUrl },
-        keywords: route.evidence.meta.clues.join(", ")
+        publisher: { "@type": "Person", name: siteTitle, url: siteUrl }
       }
     : {
         "@context": "https://schema.org",
@@ -417,8 +389,8 @@ const renderPage = async (route: RouteData, template: string, render: (route: Ro
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
     `<meta name="twitter:image" content="${image}" />`,
-    isArticle ? `<meta property="article:published_time" content="${route.evidence.meta.date}" />` : "",
-    isArticle ? `<meta property="article:modified_time" content="${route.evidence.meta.updated || route.evidence.meta.date}" />` : "",
+    isArticle ? `<meta property="article:published_time" content="${route.post.meta.date}" />` : "",
+    isArticle ? `<meta property="article:modified_time" content="${route.post.meta.updated || route.post.meta.date}" />` : "",
     isNotFound ? "" : `<link rel="canonical" href="${canonical}" />`,
     structuredData ? `<script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, "\\u003c")}</script>` : ""
   ].filter(Boolean).join("\n");
@@ -435,18 +407,18 @@ const writeFeeds = async (site: SiteData) => {
   const urls = allRoutes(site)
     .filter((route) => route.kind !== "not-found")
     .map((route) => {
-      const lastModified = route.kind === "evidence" ? route.evidence.meta.updated || route.evidence.meta.date : undefined;
+      const lastModified = route.kind === "post" ? route.post.meta.updated || route.post.meta.date : undefined;
       return `<url><loc>${new URL(routePath(route), siteUrl).href}</loc>${lastModified ? `<lastmod>${lastModified}</lastmod>` : ""}</url>`;
     })
     .join("");
   await fs.writeFile(path.join(distDir, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`, "utf8");
 
   const feedUrl = new URL("/rss.xml", siteUrl).href;
-  const items = site.evidences
+  const items = site.posts
     .slice(0, 30)
-    .map((evidence) => {
-      const link = new URL(`/evidence/${evidence.meta.slug}/`, siteUrl).href;
-      return `<item><title>${escapeHtml(evidence.meta.title)}</title><link>${link}</link><guid>${link}</guid><pubDate>${new Date(evidence.meta.date).toUTCString()}</pubDate><description>${escapeHtml(evidence.plainText.slice(0, 180))}</description></item>`;
+    .map((post) => {
+      const link = new URL(`/blog/${post.meta.slug}/`, siteUrl).href;
+      return `<item><title>${escapeHtml(post.meta.title)}</title><link>${link}</link><guid>${link}</guid><pubDate>${new Date(post.meta.date).toUTCString()}</pubDate><description>${escapeHtml(post.plainText.slice(0, 180))}</description></item>`;
     })
     .join("");
   const channelMeta = [
@@ -470,15 +442,13 @@ const writeFeeds = async (site: SiteData) => {
     "",
     "## 文章",
     "",
-    ...site.evidences.map((evidence) => {
-      const link = new URL(`/evidence/${evidence.meta.slug}/`, siteUrl).href;
-      return `- [${evidence.meta.title}](${link})：${evidence.plainText.slice(0, 80)}`;
+    ...site.posts.map((post) => {
+      const link = new URL(`/blog/${post.meta.slug}/`, siteUrl).href;
+      return `- [${post.meta.title}](${link})：${post.plainText.slice(0, 80)}`;
     }),
     "",
     "## 其他",
     "",
-    `- [归档](${new URL("/dossier/", siteUrl).href})：全部文章列表`,
-    `- [标签](${new URL("/clues/", siteUrl).href})：按标签浏览`,
     `- [RSS](${feedUrl})：订阅更新`,
     ""
   ].join("\n");
@@ -488,7 +458,7 @@ const writeFeeds = async (site: SiteData) => {
 
 const build = async () => {
   const site = await loadSite();
-  console.log(`Publishing ${site.evidences.length} posts${process.env.INCLUDE_DRAFTS === "true" ? " including drafts" : " (drafts excluded)"}.`);
+  console.log(`Publishing ${site.posts.length} posts${process.env.INCLUDE_DRAFTS === "true" ? " including drafts" : " (drafts excluded)"}.`);
   await writeGeneratedData(site);
   await fs.rm(distDir, { recursive: true, force: true });
   await fs.rm(ssrOutDir, { recursive: true, force: true });

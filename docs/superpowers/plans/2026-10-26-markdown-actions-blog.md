@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-26-markdown-actions-blog-design.md`
 
+**Approved scope amendment:** The user subsequently required a blog-only architecture. The implementation keeps home, `/blog/<slug>/`, search, theme, RSS, sitemap, and 404, and removes evidence/dossier/clues routes, types, UI, styles, and assets.
+
 ## Global Constraints
 
 - Daily authoring changes only `blog/*.md`; no local build is required.

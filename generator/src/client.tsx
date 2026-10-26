@@ -23,8 +23,8 @@ async function boot() {
     // current article's body from the server-rendered DOM before hydrating.
     const route = findRoute(window.location.pathname, site);
     const manuscript = root.querySelector<HTMLElement>(".manuscript");
-    if (route.kind === "evidence" && manuscript) {
-      route.evidence.html = manuscript.innerHTML;
+    if (route.kind === "post" && manuscript) {
+      route.post.html = manuscript.innerHTML;
     }
   }
 

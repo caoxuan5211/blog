@@ -2,7 +2,7 @@
 
 ## Intent
 
-Keep the current React/Vite blog appearance, search, dark mode, archives, tags, RSS, sitemap, SEO metadata, and `mineguai.com`, while making the author's daily workflow only:
+Keep the current React/Vite blog appearance, search, dark mode, RSS, sitemap, SEO metadata, and `mineguai.com`, while making the author's daily workflow only:
 
 ```powershell
 git add .
@@ -21,6 +21,7 @@ Markdown posts live in `blog/*.md`. GitHub Actions performs every build and depl
 - Build and deploy automatically after pushes to `main`.
 - Start with no legacy/sample posts.
 - Preserve the current visual design and custom domain.
+- Expose posts only at `/blog/<slug>/`; remove the old evidence, dossier/archive, and clues/tag architecture completely.
 - End with only the active `caoxuan5211/blog` GitHub repository and active `F:\myblog` local project.
 
 ## Non-goals
@@ -34,7 +35,7 @@ Markdown posts live in `blog/*.md`. GitHub Actions performs every build and depl
 
 - GitHub Actions must check out full history (`fetch-depth: 0`).
 - A new uncommitted local file may use filesystem timestamps for preview, but deployed dates always come from Git.
-- Optional YAML/TOML front matter remains supported for tags, categories, draft state, and cover images; title and dates do not require it.
+- Optional YAML/TOML front matter remains supported for draft state, cover images, and an explicit title; title and dates do not require it.
 - The custom domain is `https://mineguai.com`.
 - The existing branch-published site must remain available until the Actions deployment succeeds.
 - Destructive cleanup happens only after the Actions site is verified.
@@ -50,6 +51,7 @@ Markdown posts live in `blog/*.md`. GitHub Actions performs every build and depl
 - `blog/` contains author-owned Markdown only.
 - `generator/` contains the existing React/Vite static generator, trimmed of local writer/deploy helpers.
 - The generator reads `../blog`, derives Git dates through a focused metadata module, generates `generator/dist`, and never commits `dist`.
+- Generated routes are limited to `/`, `/blog/<slug>/`, `/404.html`, RSS, sitemap, robots, and metadata feeds.
 - `.github/workflows/deploy-pages.yml` tests, builds, uploads `generator/dist`, and deploys it through GitHub Pages.
 - Migration is staged: add the new pipeline while retaining the current root static output; switch Pages to GitHub Actions and verify; then delete legacy root output and external leftovers.
 
