@@ -145,7 +145,7 @@ function SiteHeader({
         </nav>
         <div className="site-header__tools">
           <button className="tool-button tool-button--search" type="button" onClick={onSearch} aria-label="搜索">
-            <span>搜索</span>
+            <Icon name="search" />
           </button>
           <ThemeRocker theme={theme} onToggle={onToggleTheme} />
         </div>

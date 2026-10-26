@@ -42,6 +42,9 @@ test("an empty blog still produces the site shell, RSS, and sitemap", async (t) 
   runBuild(repo, blog);
 
   assert.match(await readFile(path.join(distDir, "index.html"), "utf8"), /<title>soken<\/title>/);
+  const home = await readFile(path.join(distDir, "index.html"), "utf8");
+  assert.match(home, /<button class="tool-button tool-button--search"[^>]*aria-label="搜索"><svg/);
+  assert.doesNotMatch(home, /tool-button--search"[^>]*><span>搜索<\/span>/);
   assert.match(await readFile(path.join(distDir, "rss.xml"), "utf8"), /<channel>/);
   assert.match(await readFile(path.join(distDir, "sitemap.xml"), "utf8"), /https:\/\/mineguai\.com\//);
   assert.equal(await readFile(path.join(distDir, "sitemap.xml"), "utf8").then((text) => /evidence|dossier|clues/.test(text)), false);

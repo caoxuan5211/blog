@@ -405,11 +405,10 @@ svg {
   line-height: 1;
 }
 
-.tool-button--search span {
-  font-size: var(--ui-size);
-  font-weight: 400;
-  letter-spacing: 0;
-  line-height: 1.5;
+.tool-button--search {
+  width: 36px;
+  justify-content: center;
+  padding-inline: 0;
 }
 
 /* ------------------------------ theme toggle ------------------------------ */
@@ -1487,17 +1486,6 @@ svg {
   .site-header__row {
     grid-template-columns: 1fr auto;
     min-height: 3.6rem;
-  }
-
-  .tool-button--search kbd {
-    display: none;
-  }
-
-  .tool-button--search {
-    width: 2.55rem;
-    min-height: 44px;
-    padding: 0;
-    justify-content: center;
   }
 
   .entry-toc {
