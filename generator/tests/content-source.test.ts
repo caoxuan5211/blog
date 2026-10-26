@@ -31,6 +31,14 @@ test("a post without an H1 falls back to its filename-derived title", () => {
   assert.equal(result.body, "Paragraph only.\n");
 });
 
+test("an H1-looking line inside a fenced code block is not treated as the post title", () => {
+  const markdown = "```bash\n# not-a-title\necho hello\n```\n\nParagraph.\n";
+  const result = parsePostSource(markdown, "code-notes");
+
+  assert.equal(result.title, "code-notes");
+  assert.equal(result.body, markdown);
+});
+
 test("empty Markdown is a valid post source", () => {
   const result = parsePostSource("", "empty-post");
 
