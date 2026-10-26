@@ -12,6 +12,7 @@ import { createHighlighter } from "shiki";
 import { build as viteBuild } from "vite";
 import { parsePostSource, slugifyPost, type FrontMatter } from "./content-source";
 import { readGitDates } from "./git-metadata";
+import { dedupeTags, summarizeTags } from "../src/content-utils";
 import { allRoutes, routePath, siteDescription, siteTitle, siteUrl } from "../src/routes";
 import type { PostMeta, RouteData, SiteData } from "../src/types";
 
@@ -282,11 +283,17 @@ const loadSite = async (): Promise<SiteData> => {
       const html = await renderMarkdown(body);
       const plainText = stripHtml(html);
       const dates = await readGitDates(repoRoot, file);
+      const explicitTags = Array.isArray(parsed.data.tags)
+        ? parsed.data.tags.map(String)
+        : parsed.data.tags
+          ? [String(parsed.data.tags)]
+          : [];
       const meta: PostMeta = {
         title: parsed.title,
         date: dates.published,
         updated: dates.modified,
         draft: toBoolean(parsed.data.draft),
+        tags: dedupeTags(explicitTags),
         slug: slugifyPost(file, contentDir),
         sourcePath: path.relative(repoRoot, file).replace(/\\/g, "/"),
         readingTime: readTime(plainText),
@@ -300,7 +307,8 @@ const loadSite = async (): Promise<SiteData> => {
     ? posts
     : posts.filter((post) => !post.meta.draft);
   visiblePosts.sort((left, right) => new Date(right.meta.date).getTime() - new Date(left.meta.date).getTime());
-  return { posts: visiblePosts };
+  const tags = summarizeTags(visiblePosts.map((post) => ({ date: post.meta.date, tags: post.meta.tags })));
+  return { posts: visiblePosts, tags };
 };
 
 const writeGeneratedData = async (site: SiteData) => {
@@ -341,6 +349,8 @@ const htmlPathForRoute = (route: RouteData): string => {
 
 const pageTitle = (route: RouteData): string => {
   if (route.kind === "home") return siteTitle;
+  if (route.kind === "tags") return `标签 · ${siteTitle}`;
+  if (route.kind === "tag") return `#${route.site.tags.find((tag) => tag.slug === route.tag)?.name || decodeURIComponent(route.tag)} · ${siteTitle}`;
   if (route.kind === "post") return `${route.post.meta.title} · ${siteTitle}`;
   return `页面不存在 · ${siteTitle}`;
 };

@@ -6,6 +6,8 @@ export const siteUrl = "https://mineguai.com";
 
 export const routePath = (route: RouteData): string => {
   if (route.kind === "home") return "/";
+  if (route.kind === "tags") return "/tags/";
+  if (route.kind === "tag") return `/tags/${route.tag}/`;
   if (route.kind === "post") return `/blog/${route.post.meta.slug}/`;
   return "/404.html";
 };
@@ -14,6 +16,8 @@ export const postPath = (post: PostDocument): string => `/blog/${post.meta.slug}
 
 export const allRoutes = (site: SiteData): RouteData[] => [
   { kind: "home", site },
+  { kind: "tags", site },
+  ...site.tags.map((tag) => ({ kind: "tag" as const, site, tag: tag.slug })),
   ...site.posts.map((post) => ({ kind: "post" as const, site, post })),
   { kind: "not-found", site }
 ];
@@ -28,6 +32,12 @@ export const findRoute = (pathname: string, site: SiteData): RouteData => {
   const pathnameWithoutIndex = pathname.replace(/\/index\.html$/i, "/");
   const normalized = pathnameWithoutIndex.endsWith("/") ? pathnameWithoutIndex : `${pathnameWithoutIndex}/`;
   if (normalized === "/") return { kind: "home", site };
+  if (normalized === "/tags/") return { kind: "tags", site };
+  const tagMatch = normalized.match(/^\/tags\/(.+)\/$/);
+  if (tagMatch) {
+    const tag = normalizeSlug(tagMatch[1]);
+    if (site.tags.some((item) => item.slug === tag)) return { kind: "tag", site, tag };
+  }
   const postMatch = normalized.match(/^\/blog\/(.+)\/$/);
   if (postMatch) {
     const slug = normalizeSlug(postMatch[1]);

@@ -53,12 +53,17 @@ test("an empty blog still produces the site shell, RSS, and sitemap", async (t) 
 test("plain Unicode Markdown with optional front matter builds a routed article", async (t) => {
   const { repo, blog } = await createContentRepo(t);
   const file = path.join(blog, "中文文章.md");
-  await writeFile(file, "---\ntags: [笔记]\n---\n# 中文标题\n\n正文内容。\n");
+  await writeFile(file, "---\ntags: [AI, ai, \"健康 学习\"]\n---\n# 中文标题\n\n正文内容。\n");
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-m", "add post"], "2026-10-12T12:00:00+08:00");
-  await writeFile(file, "---\ntags: [笔记]\n---\n# 中文标题\n\n正文内容。\n\n补充内容。\n");
+  await writeFile(file, "---\ntags: [AI, ai, \"健康 学习\"]\n---\n# 中文标题\n\n正文内容。\n\n补充内容。\n");
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-m", "update post"], "2026-10-20T18:30:00+08:00");
+  await writeFile(path.join(blog, "second.md"), "---\ntags: [ai, LLM, AI]\n---\n# Second\n\nAnother post.\n");
+  await writeFile(path.join(blog, "draft.md"), "---\ndraft: true\ntags: [Hidden]\n---\n# Draft\n\nNot published.\n");
+  await writeFile(path.join(blog, "plain.md"), "# Plain\n\nHTML and Health appear only in the body.\n");
+  git(repo, ["add", "-A"]);
+  git(repo, ["commit", "-m", "add more posts"], "2026-10-22T09:00:00+08:00");
 
   runBuild(repo, blog);
 
@@ -74,4 +79,18 @@ test("plain Unicode Markdown with optional front matter builds a routed article"
   );
   const sitemap = await readFile(path.join(distDir, "sitemap.xml"), "utf8");
   assert.doesNotMatch(sitemap, /evidence|dossier|clues/);
+  assert.match(sitemap, /https:\/\/mineguai\.com\/tags\//);
+  assert.match(sitemap, /https:\/\/mineguai\.com\/tags\/ai\//);
+  assert.match(sitemap, /https:\/\/mineguai\.com\/tags\/llm\//);
+  assert.match(sitemap, /https:\/\/mineguai\.com\/tags\/%E5%81%A5%E5%BA%B7-%E5%AD%A6%E4%B9%A0\//);
+  assert.doesNotMatch(sitemap, /hidden|html|health/i);
+  assert.equal(await readFile(path.join(generatorRoot, "src", "generated", "site-data-full.ts"), "utf8").then((text) =>
+    text.includes('"slug":"ai","name":"AI","count":2')
+  ), true);
+  assert.equal(await readFile(path.join(generatorRoot, "src", "generated", "site-data-full.ts"), "utf8").then((text) =>
+    text.includes('"slug":"llm","name":"LLM","count":1')
+  ), true);
+  assert.equal(await readFile(path.join(generatorRoot, "src", "generated", "site-data-full.ts"), "utf8").then((text) =>
+    /"name":"Hidden"|"name":"HTML"|"name":"Health"/.test(text)
+  ), false);
 });
