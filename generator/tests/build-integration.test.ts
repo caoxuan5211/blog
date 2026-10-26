@@ -52,6 +52,9 @@ test("plain Unicode Markdown with optional front matter builds a routed article"
   await writeFile(file, "---\ntags: [笔记]\n---\n# 中文标题\n\n正文内容。\n");
   git(repo, ["add", "-A"]);
   git(repo, ["commit", "-m", "add post"], "2026-10-12T12:00:00+08:00");
+  await writeFile(file, "---\ntags: [笔记]\n---\n# 中文标题\n\n正文内容。\n\n补充内容。\n");
+  git(repo, ["add", "-A"]);
+  git(repo, ["commit", "-m", "update post"], "2026-10-20T18:30:00+08:00");
 
   runBuild(repo, blog);
 
@@ -59,5 +62,11 @@ test("plain Unicode Markdown with optional front matter builds a routed article"
   assert.match(article, /<h1>中文标题<\/h1>/);
   assert.doesNotMatch(article, /<h2>中文标题<\/h2>/);
   assert.match(article, /https:\/\/mineguai\.com\/evidence\/%E4%B8%AD%E6%96%87%E6%96%87%E7%AB%A0\//);
+  assert.match(article, /<time dateTime="2026-10-12T12:00:00\+08:00">发布于 (?:<!-- -->)?2026\/10\/12<\/time>/);
+  assert.match(article, /<time dateTime="2026-10-20T18:30:00\+08:00">修改于 (?:<!-- -->)?2026\/10\/20<\/time>/);
   assert.match(await readFile(path.join(distDir, "clues", "笔记", "index.html"), "utf8"), /#笔记/);
+  assert.match(
+    await readFile(path.join(distDir, "index.html"), "utf8"),
+    /<time dateTime="2026-10-12T12:00:00\+08:00">2026\/10\/12<\/time>/
+  );
 });

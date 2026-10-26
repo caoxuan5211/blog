@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cluePath, evidencePath, findRoute, routePath, siteTitle } from "./routes";
-import { byNewest, byUpdated, estimateReadLabel, formatDate, normalizeClueSlug, shortTitle } from "./content-utils";
+import { byNewest, byUpdated, estimateReadLabel, formatDate, formatPostDates, normalizeClueSlug, shortTitle } from "./content-utils";
 import type { EvidenceDocument, RouteData, SiteData, Theme } from "./types";
 
 type AppProps = {
@@ -274,7 +274,7 @@ function PostRows({ posts, offset = 0, quiet = false }: { posts: EvidenceDocumen
               {post.meta.draft ? <i className="stamp">草稿</i> : null}
             </span>
             <span className="post-row__meta">
-              <time dateTime={post.meta.updated || post.meta.date}>{formatDate(post.meta.updated || post.meta.date)}</time>
+              <time dateTime={post.meta.date}>{formatDate(post.meta.date)}</time>
               {!quiet ? <em>{estimateReadLabel(post.meta.readingTime)}</em> : null}
             </span>
             {!quiet ? <span className="post-row__arrow" aria-hidden="true">↗</span> : null}
@@ -361,6 +361,7 @@ function CluePage({ site, clue }: { site: SiteData; clue: string }) {
 
 function EvidencePage({ evidence }: { evidence: EvidenceDocument }) {
   const headingView = useMemo(() => buildHeadingView(evidence.html), [evidence.html]);
+  const dates = formatPostDates(evidence.meta.date, evidence.meta.updated);
   return (
     <article className="entry-shell shell">
       <header className="entry-hero" data-reveal>
@@ -369,7 +370,8 @@ function EvidencePage({ evidence }: { evidence: EvidenceDocument }) {
         </div>
         <h1>{evidence.meta.title}</h1>
         <div className="entry-hero__meta">
-          <span>{formatDate(evidence.meta.updated || evidence.meta.date)}</span>
+          <time dateTime={evidence.meta.date}>发布于 {dates.published}</time>
+          {dates.modified ? <time dateTime={evidence.meta.updated}>修改于 {dates.modified}</time> : null}
           <span>{estimateReadLabel(evidence.meta.readingTime)}</span>
           {evidence.meta.draft ? <span className="stamp">草稿</span> : null}
           {evidence.meta.clues.map((clue) => (
@@ -601,7 +603,7 @@ function CommandPanel({ site, open, onClose }: { site: SiteData; open: boolean; 
               }}
               onClick={onClose}
             >
-              <span className="command-panel__date">{formatDate(evidence.meta.updated || evidence.meta.date)}</span>
+              <span className="command-panel__date">{formatDate(evidence.meta.date)}</span>
               <strong className="command-panel__title">{shortTitle(evidence.meta.title, 40)}</strong>
               <em className="command-panel__sub">{commandMeta(evidence)}</em>
               <i className="command-panel__arrow" aria-hidden="true">→</i>

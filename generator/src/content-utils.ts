@@ -6,8 +6,15 @@ export const formatDate = (value: string): string => {
   return new Intl.DateTimeFormat("zh-CN", {
     year: "numeric",
     month: "2-digit",
-    day: "2-digit"
+    day: "2-digit",
+    timeZone: "Asia/Shanghai"
   }).format(date);
+};
+
+export const formatPostDates = (date: string, updated: string): { published: string; modified?: string } => {
+  const published = formatDate(date);
+  if (new Date(updated).getTime() === new Date(date).getTime()) return { published };
+  return { published, modified: formatDate(updated) };
 };
 
 export const shortTitle = (title: string, max = 18): string => {
