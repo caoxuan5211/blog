@@ -39,6 +39,7 @@ html[data-theme="light"] {
   --font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: var(--font-sans);
   --font-mono: "Consolas Local", "Cascadia Code", "Sarasa Mono SC", Consolas, "Courier New", monospace;
+  --font-code: "Cascadia Mono", "SFMono-Regular", "Consolas Local", Consolas, "Microsoft YaHei", monospace;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --signal-beat: 1.05s;
   color-scheme: light;
@@ -782,8 +783,8 @@ svg {
 .manuscript h2 {
   position: relative;
   margin: 2.6rem 0 1rem;
-  padding: 0.15rem 0 0.15rem 0.95rem;
-  border-left: 3px solid var(--accent);
+  padding: 0;
+  border: 0;
   color: var(--ink);
   font-family: var(--font-display);
   font-size: clamp(1.25rem, 2.4vw, 1.5rem);
@@ -840,9 +841,7 @@ svg {
 .manuscript strong {
   color: var(--ink);
   font-weight: 600;
-  background: linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--accent) 18%, transparent) 0);
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
+  background: none;
 }
 
 .manuscript em {
@@ -873,68 +872,42 @@ svg {
 }
 
 .manuscript ol {
-  list-style: none;
-  counter-reset: ms-step;
-  padding-left: 0;
+  list-style: decimal;
+  padding-left: 1.35rem;
 }
 
 .manuscript ol > li {
-  position: relative;
-  padding-left: 2rem;
-  counter-increment: ms-step;
+  padding-left: 0.25rem;
 }
 
 .manuscript ol > li::before {
-  content: counter(ms-step);
-  position: absolute;
-  left: 0;
-  top: 0.12rem;
-  display: inline-grid;
-  place-items: center;
-  width: 1.45rem;
-  height: 1.45rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 12%, var(--paper));
-  color: var(--accent-ink);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  line-height: 1;
+  content: none;
 }
 
 .manuscript ul {
-  list-style: none;
-  padding-left: 0.15rem;
+  list-style: disc;
+  padding-left: 1.35rem;
 }
 
 .manuscript ul > li {
-  position: relative;
-  padding-left: 1.15rem;
+  padding-left: 0.25rem;
 }
 
 .manuscript ul > li::before {
-  content: "";
-  position: absolute;
-  left: 0.15rem;
-  top: 0.72em;
-  width: 0.38rem;
-  height: 0.38rem;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--accent) 70%, var(--ink));
+  content: none;
 }
 
 .manuscript ul ul > li::before {
-  background: transparent;
-  border: 1.5px solid color-mix(in srgb, var(--accent) 70%, var(--ink));
+  content: none;
 }
 
 .manuscript blockquote {
   margin: 1.5rem 0;
-  padding: 0.85rem 1rem 0.85rem 1.1rem;
-  border-left: 3px solid var(--accent);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  background: color-mix(in srgb, var(--accent) 6%, var(--paper));
-  color: var(--ink);
+  padding: 0.15rem 0 0.15rem 1rem;
+  border-left: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: none;
+  color: var(--ink-soft);
   font-family: var(--font-sans);
   font-size: 1.05rem;
   line-height: 1.8;
@@ -949,34 +922,37 @@ svg {
   margin: 2.1rem 0;
   border: 0;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--ink) 18%, transparent) 12%,
-    color-mix(in srgb, var(--ink) 18%, transparent) 88%,
-    transparent
-  );
+  background: var(--line);
 }
 
 .manuscript code {
-  padding: 0.1rem 0.38rem;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--bg-deep) 78%, #fff);
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 0.88em;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-family: var(--font-code);
+  font-size: 0.92em;
+  font-variant-ligatures: none;
   letter-spacing: 0;
 }
 
 .manuscript pre {
   overflow-x: auto;
   margin: 1.15rem 0 1.45rem;
-  padding: 1rem 1.05rem;
-  border: 1px solid color-mix(in srgb, var(--ink) 88%, #000);
-  border-radius: var(--radius-md);
-  background: var(--code-bg);
-  color: var(--code-fg);
-  box-shadow: var(--shadow-soft);
+  padding: 0.65rem 0.9rem;
+  border: 0;
+  border-inline: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  box-shadow: none;
+  font-family: var(--font-code);
+  font-size: 15px;
+  font-weight: 400;
+  font-variant-ligatures: none;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  tab-size: 4;
 }
 
 .manuscript pre + p,
@@ -989,9 +965,9 @@ svg {
   padding: 0;
   background: transparent;
   color: inherit;
-  font-size: 0.88rem;
-  line-height: 1.65;
-  letter-spacing: 0;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
 }
 
 .manuscript table {
@@ -1006,26 +982,34 @@ svg {
 .manuscript th,
 .manuscript td {
   padding: 0.65rem 0.7rem;
-  border: 1px solid var(--line);
+  border: 0;
+  border-bottom: 1px solid var(--line);
   text-align: left;
 }
 
 .manuscript th {
-  background: color-mix(in srgb, var(--paper) 70%, var(--bg-deep));
+  background: none;
   color: var(--ink);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .manuscript img {
   margin: 1.2rem 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-soft);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
-.manuscript .shiki,
+.manuscript .shiki {
+  font-family: var(--font-code);
+  background: transparent !important;
+  color: inherit !important;
+}
+
 .manuscript .shiki span {
-  font-family: var(--font-mono);
+  font-family: var(--font-code);
+  background: transparent !important;
+  color: inherit !important;
 }
 
 /* ----------------------------------- toc ---------------------------------- */
@@ -1052,11 +1036,11 @@ svg {
   min-width: 44px;
   min-height: 5.5rem;
   padding: 0.7rem 0.35rem;
-  border: 1px solid var(--line);
-  border-right: 0;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-  background: color-mix(in srgb, var(--paper) 94%, transparent);
-  box-shadow: var(--shadow-soft);
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--bg);
+  box-shadow: none;
   writing-mode: vertical-rl;
   letter-spacing: 0.18em;
   font-size: 0.78rem;
@@ -1067,12 +1051,12 @@ svg {
   max-height: min(62vh, 28rem);
   overflow: auto;
   padding: 1rem 1rem 1rem 0.85rem;
-  border: 1px solid var(--line);
-  border-right: 0;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-  background: color-mix(in srgb, var(--paper) 96%, transparent);
-  box-shadow: var(--shadow-paper);
-  backdrop-filter: blur(12px);
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--bg);
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .entry-toc__panel strong {
@@ -1250,11 +1234,52 @@ svg {
 
 .code-block {
   position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
   margin: 1.15rem 0 1.45rem;
+  padding-inline: 0.9rem;
+  border-inline: 1px solid transparent;
 }
 
-.code-block pre {
+.code-block::before,
+.code-block::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--ink);
+  pointer-events: none;
+  transition: height 240ms ease, width 240ms ease, background-color 240ms ease;
+}
+
+.code-block::before {
+  left: -1px;
+  transform: translate(-50%, -50%);
+}
+
+.code-block::after {
+  right: -1px;
+  transform: translate(50%, -50%);
+}
+
+.code-block:hover::before,
+.code-block:hover::after,
+.code-block:has(:focus-visible)::before,
+.code-block:has(:focus-visible)::after {
+  width: 1px;
+  height: 24px;
+  background: var(--ink-muted);
+}
+
+.manuscript .code-block pre {
+  min-width: 0;
   margin: 0;
+  padding-inline: 0;
+  border: 0;
 }
 
 .manuscript .code-block + p,
@@ -1263,35 +1288,20 @@ svg {
   margin-top: 0.15rem;
 }
 
-.code-block__lang {
-  position: absolute;
-  top: 0;
-  right: 3.9rem;
-  padding: 0.14rem 0.55rem;
-  border-radius: 0 0 6px 6px;
-  background: color-mix(in srgb, #fff 8%, transparent);
-  color: color-mix(in srgb, var(--code-fg) 64%, transparent);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  pointer-events: none;
-}
-
 .code-block__copy {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.55rem;
-  padding: 0.28rem 0.6rem;
-  border: 1px solid color-mix(in srgb, #fff 18%, transparent);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, #fff 7%, transparent);
-  color: color-mix(in srgb, var(--code-fg) 78%, transparent);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.35rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-muted);
   font-family: var(--font-sans);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   line-height: 1;
   letter-spacing: 0.04em;
-  opacity: 0.65;
+  opacity: 0;
+  pointer-events: none;
   transition:
     opacity 0.16s var(--ease-out),
     color 0.16s var(--ease-out),
@@ -1301,24 +1311,32 @@ svg {
 }
 
 .code-block:hover .code-block__copy,
-.code-block__copy:focus-visible {
+.code-block:has(:focus-visible) .code-block__copy {
   opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .code-block:focus-within .code-block__copy {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .code-block__copy:hover {
-  border-color: color-mix(in srgb, #fff 34%, transparent);
-  background: color-mix(in srgb, #fff 14%, transparent);
-  color: var(--code-fg);
-  transform: translateY(-1px);
+  background: transparent;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  transform: none;
 }
 
 .code-block__copy:active {
-  transform: translateY(0) scale(0.96);
+  transform: none;
 }
 
 .code-block__copy.is-copied {
-  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
-  color: var(--code-fg);
+  color: var(--ink);
   opacity: 1;
 }
 
@@ -1374,12 +1392,12 @@ svg {
   place-items: center;
   width: 2.85rem;
   height: 2.85rem;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--ink-soft);
-  box-shadow: var(--shadow-lift);
-  backdrop-filter: blur(10px);
+  box-shadow: none;
+  backdrop-filter: none;
   opacity: 0;
   transform: translateY(14px) scale(0.9);
   pointer-events: none;
@@ -1403,9 +1421,8 @@ svg {
 }
 
 .back-top:hover {
-  border-color: var(--accent);
-  color: var(--accent-ink);
-  box-shadow: 0 10px 24px var(--accent-glow);
+  color: var(--ink);
+  box-shadow: none;
   transform: translateY(-2px);
 }
 
@@ -1453,6 +1470,19 @@ svg {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .code-block::before,
+  .code-block::after {
+    transition: none;
+  }
+
+  .code-block:hover::before,
+  .code-block:hover::after,
+  .code-block:has(:focus-visible)::before,
+  .code-block:has(:focus-visible)::after {
+    width: 3px;
+    height: 3px;
+  }
+
   html {
     scroll-behavior: auto;
   }

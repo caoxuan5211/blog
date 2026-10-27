@@ -36,20 +36,12 @@ function initHeadingAnchors(scope: HTMLElement) {
 function enhanceCodeBlocks(scope: HTMLElement) {
   scope.querySelectorAll<HTMLPreElement>("pre").forEach((pre) => {
     if (pre.closest(".code-block")) return;
+    if (!pre.hasAttribute("tabindex")) pre.tabIndex = 0;
 
     const wrap = document.createElement("div");
     wrap.className = "code-block";
     pre.replaceWith(wrap);
     wrap.append(pre);
-
-    const lang = (pre.dataset.lang || "").trim();
-    if (lang && lang !== "text") {
-      const badge = document.createElement("span");
-      badge.className = "code-block__lang";
-      badge.textContent = lang;
-      badge.setAttribute("aria-hidden", "true");
-      wrap.append(badge);
-    }
 
     const button = document.createElement("button");
     button.type = "button";
@@ -83,20 +75,27 @@ function initLightbox(scope: HTMLElement) {
   );
   if (!images.length || typeof HTMLDialogElement === "undefined") return;
 
-  const dialog = document.createElement("dialog");
-  dialog.className = "lightbox";
-  dialog.setAttribute("aria-label", "查看大图");
-  const zoomed = document.createElement("img");
-  dialog.append(zoomed);
-  dialog.addEventListener("click", () => dialog.close());
-  document.body.append(dialog);
+  let dialog = document.querySelector<HTMLDialogElement>("dialog.lightbox");
+  if (!dialog) {
+    dialog = document.createElement("dialog");
+    dialog.className = "lightbox";
+    dialog.setAttribute("aria-label", "查看大图");
+    dialog.append(document.createElement("img"));
+    const currentDialog = dialog;
+    dialog.addEventListener("click", () => currentDialog.close());
+    document.body.append(dialog);
+  }
+  const currentDialog = dialog;
+  const zoomed = currentDialog.querySelector("img");
+  if (!zoomed) return;
 
   images.forEach((img) => {
+    if (img.classList.contains("is-zoomable")) return;
     img.classList.add("is-zoomable");
     img.addEventListener("click", () => {
       zoomed.src = img.currentSrc || img.src;
       zoomed.alt = img.alt || "";
-      dialog.showModal();
+      currentDialog.showModal();
     });
   });
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { findRoute, postPath, siteTitle, tagPath } from "./routes";
 import { byNewest, estimateReadLabel, formatDate, formatPostDates, normalizeTagSlug, shortTitle } from "./content-utils";
+import { initContentEnhancements } from "./enhance";
 import type { PostDocument, RouteData, SiteData, Theme } from "./types";
 
 type AppProps = {
@@ -321,6 +322,11 @@ function TagPage({ site, tag }: { site: SiteData; tag: string }) {
 function PostPage({ post }: { post: PostDocument }) {
   const headingView = useMemo(() => buildHeadingView(post.html), [post.html]);
   const dates = formatPostDates(post.meta.date, post.meta.updated);
+
+  useEffect(() => {
+    initContentEnhancements();
+  });
+
   return (
     <article className="entry-shell shell">
       <header className="entry-hero" data-reveal>

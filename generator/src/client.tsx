@@ -5,7 +5,6 @@ import { findRoute } from "./routes";
 import { siteData } from "./generated/site-data";
 import "./styles.css";
 import { initPageMotion } from "./motion";
-import { initContentEnhancements } from "./enhance";
 
 async function boot() {
   const root = document.getElementById("root") as HTMLElement;
@@ -36,7 +35,6 @@ async function boot() {
   }
 
   initPageMotion();
-  window.requestAnimationFrame(() => initContentEnhancements());
 }
 
 void boot();
