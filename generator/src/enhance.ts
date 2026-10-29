@@ -1,7 +1,7 @@
 /**
  * Progressive enhancements applied to the rendered article DOM.
- * Everything here runs after hydration and only touches nodes inside
- * the dangerouslySetInnerHTML container, which React never reconciles.
+ * Runs after article commits and safely reapplies if React replaces
+ * the contents of the dangerouslySetInnerHTML container.
  */
 export function initContentEnhancements() {
   const manuscript = document.querySelector<HTMLElement>(".manuscript");
@@ -34,38 +34,81 @@ function initHeadingAnchors(scope: HTMLElement) {
 }
 
 function enhanceCodeBlocks(scope: HTMLElement) {
-  scope.querySelectorAll<HTMLPreElement>("pre").forEach((pre) => {
+  scope.querySelectorAll<HTMLPreElement>("pre").forEach((pre, index) => {
     if (pre.closest(".code-block")) return;
-    if (!pre.hasAttribute("tabindex")) pre.tabIndex = 0;
 
     const wrap = document.createElement("div");
     wrap.className = "code-block";
+    wrap.tabIndex = 0;
+    wrap.setAttribute("role", "button");
+    wrap.setAttribute("aria-label", "复制代码");
+    wrap.title = "点击复制代码";
+    pre.removeAttribute("tabindex");
+    if (!pre.id) {
+      let codeId = `code-sample-${index + 1}`;
+      while (document.getElementById(codeId)) codeId += "-";
+      pre.id = codeId;
+    }
+    wrap.setAttribute("aria-describedby", pre.id);
     pre.replaceWith(wrap);
     wrap.append(pre);
 
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "code-block__copy";
-    button.textContent = "复制";
-    button.setAttribute("aria-label", "复制代码");
+    const status = document.createElement("span");
+    status.className = "code-block__status";
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    status.setAttribute("aria-atomic", "true");
+    wrap.append(status);
 
     let timer: number | undefined;
-    button.addEventListener("click", async () => {
-      const source = pre.querySelector("code")?.innerText ?? pre.innerText;
+    const copyCode = async () => {
+      const source = pre.querySelector("code")?.textContent ?? pre.textContent ?? "";
+      wrap.classList.remove("is-copied", "is-copy-error");
       try {
         await navigator.clipboard.writeText(source);
-        button.textContent = "已复制 ✓";
-        button.classList.add("is-copied");
+        status.textContent = "已复制";
+        wrap.classList.add("is-copied");
       } catch {
-        button.textContent = "复制失败";
+        status.textContent = "复制失败，请选择代码手动复制";
+        wrap.classList.add("is-copy-error");
       }
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
-        button.textContent = "复制";
-        button.classList.remove("is-copied");
+        status.textContent = "";
+        wrap.classList.remove("is-copied", "is-copy-error");
       }, 1600);
+    };
+
+    let pointerStart: { x: number; y: number; scrollLeft: number } | null = null;
+    wrap.addEventListener("pointerdown", (event) => {
+      pointerStart = event.isPrimary && event.button === 0
+        ? { x: event.clientX, y: event.clientY, scrollLeft: pre.scrollLeft }
+        : null;
     });
-    wrap.append(button);
+    wrap.addEventListener("pointercancel", () => { pointerStart = null; });
+    wrap.addEventListener("click", (event) => {
+      const start = pointerStart;
+      pointerStart = null;
+      const selection = window.getSelection();
+      const selectingCode = selection && !selection.isCollapsed &&
+        (wrap.contains(selection.anchorNode) || wrap.contains(selection.focusNode));
+      const dragged = start && (
+        Math.hypot(event.clientX - start.x, event.clientY - start.y) > 6 ||
+        Math.abs(pre.scrollLeft - start.scrollLeft) > 1
+      );
+      if (event.defaultPrevented || event.button !== 0 || selectingCode || dragged) return;
+      void copyCode();
+    });
+    wrap.addEventListener("keydown", (event) => {
+      if (event.target !== wrap) return;
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        void copyCode();
+      } else if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && pre.scrollWidth > pre.clientWidth) {
+        event.preventDefault();
+        pre.scrollBy({ left: event.key === "ArrowRight" ? 64 : -64 });
+      }
+    });
   });
 }
 

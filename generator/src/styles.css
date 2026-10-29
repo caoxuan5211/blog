@@ -938,6 +938,8 @@ svg {
 
 .manuscript pre {
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   margin: 1.15rem 0 1.45rem;
   padding: 0.65rem 0.9rem;
   border: 0;
@@ -953,6 +955,12 @@ svg {
   line-height: 1.7;
   letter-spacing: 0.01em;
   tab-size: 4;
+}
+
+.manuscript pre::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .manuscript pre + p,
@@ -1234,13 +1242,11 @@ svg {
 
 .code-block {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 1rem;
+  min-height: 44px;
   margin: 1.15rem 0 1.45rem;
   padding-inline: 0.9rem;
   border-inline: 1px solid transparent;
+  cursor: copy;
 }
 
 .code-block::before,
@@ -1268,6 +1274,8 @@ svg {
 
 .code-block:hover::before,
 .code-block:hover::after,
+.code-block:focus-visible::before,
+.code-block:focus-visible::after,
 .code-block:has(:focus-visible)::before,
 .code-block:has(:focus-visible)::after {
   width: 1px;
@@ -1288,55 +1296,23 @@ svg {
   margin-top: 0.15rem;
 }
 
-.code-block__copy {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0.35rem 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+.code-block__status {
+  position: absolute;
+  right: 0.9rem;
+  top: -0.2rem;
+  transform: translateY(-100%);
   color: var(--ink-muted);
   font-family: var(--font-sans);
-  font-size: 0.8125rem;
-  line-height: 1;
-  letter-spacing: 0.04em;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  letter-spacing: 0;
   opacity: 0;
   pointer-events: none;
-  transition:
-    opacity 0.16s var(--ease-out),
-    color 0.16s var(--ease-out),
-    border-color 0.16s var(--ease-out),
-    background 0.16s var(--ease-out),
-    transform 0.16s var(--ease-out);
+  transition: opacity 120ms ease;
 }
 
-.code-block:hover .code-block__copy,
-.code-block:has(:focus-visible) .code-block__copy {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-@media (hover: none) {
-  .code-block:focus-within .code-block__copy {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
-
-.code-block__copy:hover {
-  background: transparent;
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 0.25em;
-  transform: none;
-}
-
-.code-block__copy:active {
-  transform: none;
-}
-
-.code-block__copy.is-copied {
-  color: var(--ink);
+.code-block.is-copied .code-block__status,
+.code-block.is-copy-error .code-block__status {
   opacity: 1;
 }
 
@@ -1477,6 +1453,8 @@ svg {
 
   .code-block:hover::before,
   .code-block:hover::after,
+  .code-block:focus-visible::before,
+  .code-block:focus-visible::after,
   .code-block:has(:focus-visible)::before,
   .code-block:has(:focus-visible)::after {
     width: 3px;
@@ -1505,8 +1483,7 @@ svg {
   .site-footer,
   .entry-toc,
   .back-top,
-  .code-block__copy,
-  .code-block__lang,
+  .code-block__status,
   .lightbox {
     display: none !important;
   }
